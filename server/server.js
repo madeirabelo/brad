@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
+const os = require('os');
 
 const app = express();
 
@@ -87,6 +88,21 @@ app.post('/api/visited-countries/:userId', (req, res) => {
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, '0.0.0.0', () => {
+  const networkInterfaces = os.networkInterfaces();
+  const addresses = [];
+  
+  // Get all IPv4 addresses
+  Object.keys(networkInterfaces).forEach((interfaceName) => {
+    networkInterfaces[interfaceName].forEach((interface) => {
+      if (interface.family === 'IPv4' && !interface.internal) {
+        addresses.push(interface.address);
+      }
+    });
+  });
+  
   console.log(`Server running on port ${PORT}`);
-  console.log(`Access the API at http://192.168.31.33:${PORT}/api`);
+  console.log('Available IP addresses:');
+  addresses.forEach(ip => {
+    console.log(`http://${ip}:${PORT}/api`);
+  });
 }); 

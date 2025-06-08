@@ -204,29 +204,72 @@ const VisitedCountries = () => {
           )}
         </select>
       </div>
-      <div className="countries-grid">
-        {filteredCountries.map(country => (
-          <div key={country.code} className="country-card">
-            <img 
-              src={country.flag} 
-              alt={`${country.name} flag`} 
-              className="country-flag"
-              loading="lazy"
-            />
-            <div className="country-info">
-              <span className="country-name">{country.name}</span>
-              <label className="checkbox-container">
-                <input
-                  type="checkbox"
-                  checked={visitedCountries.includes(country.code)}
-                  onChange={() => handleCountryToggle(country.code)}
+
+      {/* Visited Countries Section */}
+      <div className="countries-section">
+        <h2 className="section-title">Visited Countries ({visitedCountries.length})</h2>
+        <div className="countries-grid">
+          {filteredCountries
+            .filter(country => visitedCountries.includes(country.code))
+            .map(country => (
+              <div key={country.code} className="country-card">
+                <img 
+                  src={country.flag} 
+                  alt={`${country.name} flag`} 
+                  className="country-flag"
+                  loading="lazy"
                 />
-                <span className="checkmark"></span>
-              </label>
-            </div>
-          </div>
-        ))}
+                <div className="country-info">
+                  <span className="country-name">{country.name}</span>
+                  <label className="checkbox-container">
+                    <input
+                      type="checkbox"
+                      checked={true}
+                      onChange={() => handleCountryToggle(country.code)}
+                    />
+                    <span className="checkmark"></span>
+                  </label>
+                </div>
+              </div>
+            ))}
+        </div>
       </div>
+
+      {/* Separator */}
+      <div className="section-separator">
+        <span>Not Visited Countries</span>
+      </div>
+
+      {/* Non-Visited Countries Section */}
+      <div className="countries-section">
+        <h2 className="section-title">Not Visited Countries ({countries.length - visitedCountries.length})</h2>
+        <div className="countries-grid">
+          {filteredCountries
+            .filter(country => !visitedCountries.includes(country.code))
+            .map(country => (
+              <div key={country.code} className="country-card">
+                <img 
+                  src={country.flag} 
+                  alt={`${country.name} flag`} 
+                  className="country-flag"
+                  loading="lazy"
+                />
+                <div className="country-info">
+                  <span className="country-name">{country.name}</span>
+                  <label className="checkbox-container">
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={() => handleCountryToggle(country.code)}
+                    />
+                    <span className="checkmark"></span>
+                  </label>
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+
       <div className="stats">
         <p>Total countries visited: {visitedCountries.length}</p>
         <p>Total countries: {countries.length}</p>
