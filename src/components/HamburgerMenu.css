@@ -1,0 +1,150 @@
+.hamburger-menu {
+  position: relative;
+  margin: 1rem;
+}
+
+.hamburger-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 2.5rem;
+  height: 2.5rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 10;
+}
+
+.hamburger-button span {
+  width: 2.5rem;
+  height: 0.3rem;
+  background: white;
+  border-radius: 10px;
+  transition: all 0.3s linear;
+  position: relative;
+  transform-origin: 1px;
+}
+
+.hamburger-button.open span:first-child {
+  transform: rotate(45deg);
+}
+
+.hamburger-button.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-button.open span:nth-child(3) {
+  transform: rotate(-45deg);
+}
+
+.menu {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100vh;
+  background: white;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  transition: right 0.3s ease-in-out;
+  z-index: 5;
+  text-align: left;
+  visibility: hidden;
+}
+
+.menu.open {
+  right: 0;
+  visibility: visible;
+}
+
+.main-menu {
+  list-style: none;
+  padding: 0;
+  margin: 80px 0 0 0;
+  text-align: left;
+}
+
+.main-menu > li {
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.main-menu > li > a {
+  text-decoration: none;
+  color: #333;
+  font-size: 1.2rem;
+  transition: color 0.3s ease;
+  display: block;
+  padding: 1rem 2rem;
+  text-align: left;
+}
+
+.main-menu > li > a:hover {
+  color: #007bff;
+}
+
+/* Submenu styles */
+.submenu-container {
+  position: relative;
+  text-align: left;
+}
+
+.menu-item-with-submenu {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  color: #333;
+  font-size: 1.2rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.menu-item-with-submenu:hover {
+  color: #007bff;
+}
+
+.submenu-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+.submenu-arrow.expanded {
+  transform: rotate(180deg);
+}
+
+.submenu {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+  background-color: #f8f9fa;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.submenu.expanded {
+  max-height: 200px;
+}
+
+.submenu li {
+  border-bottom: none;
+  text-align: left;
+}
+
+.submenu a {
+  padding: 0.8rem 2rem 0.8rem 3rem;
+  font-size: 1.1rem;
+  text-decoration: none;
+  color: #333;
+  display: block;
+  text-align: left;
+}
+
+.submenu a:hover {
+  background-color: #e9ecef;
+  color: #007bff;
+} 

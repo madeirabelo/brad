@@ -1,0 +1,6 @@
+users:
+  default-user:
+    countries:
+      - PT
+      - AO
+    lastUpdated: '2025-06-07T23:24:23.660Z'
