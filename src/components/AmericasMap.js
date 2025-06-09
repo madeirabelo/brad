@@ -1,9 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import './AmericasMap.css';
+import countryToISOData from '../data/countryToISO.json';
 
 const API_URL = 'http://192.168.31.33:5050/api';
 const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson';
+
+// Get the country to ISO mapping from the JSON file
+const countryToISO = countryToISOData.countries;
 
 const AmericasMap = () => {
   const svgRef = useRef();
@@ -51,18 +55,15 @@ const AmericasMap = () => {
           throw new Error('Invalid GeoJSON data structure');
         }
         
-        // Filter for Americas countries, excluding Greenland
+        // Filter for Americas countries
         const americasFeatures = data.features.filter(feature => {
           const props = feature.properties;
           const continent = props.CONTINENT;
           const name = props.NAME;
           
-          const isAmericas = 
-            (continent === 'North America' || 
-            continent === 'South America') &&
-            name !== 'Greenland'; // Exclude Greenland
-          
-          return isAmericas;
+          // Include both North and South American countries, but exclude Greenland
+          return (continent === 'North America' || continent === 'South America') && 
+                 name !== 'Greenland';
         });
         
         if (americasFeatures.length === 0) {
@@ -91,7 +92,7 @@ const AmericasMap = () => {
 
     const renderMap = () => {
       try {
-        const container = document.getElementById('americas-map-container');
+        const container = document.querySelector('.americas-map-container');
         if (!container) return;
 
         // Clear previous SVG
@@ -110,20 +111,31 @@ const AmericasMap = () => {
           .attr('width', width)
           .attr('height', height);
 
-        // Create projection centered on Americas
+        // Create projection
         const projection = d3.geoMercator()
-          .fitSize([width, height], mapData)
-          .translate([width / 2, height / 2])
-          .scale(width / 2.5);
+          .center([-90, 0]) // Center on Americas
+          .scale(200) // Reduced scale to show more of the continent
+          .translate([width / 2, height / 2]);
 
         // Create path generator
         const path = d3.geoPath().projection(projection);
 
         // Create tooltip
-        const tooltip = d3.select(container)
+        const tooltip = d3.select('body')
           .append('div')
           .attr('class', 'tooltip')
-          .style('opacity', 0);
+          .style('position', 'fixed')
+          .style('visibility', 'hidden')
+          .style('background-color', 'rgba(0, 0, 0, 0.8)')
+          .style('color', 'white')
+          .style('padding', '8px 12px')
+          .style('border-radius', '4px')
+          .style('font-size', '14px')
+          .style('font-weight', 'bold')
+          .style('pointer-events', 'none')
+          .style('z-index', '9999')
+          .style('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.2)')
+          .style('transition', 'opacity 0.2s');
 
         // Draw countries
         svg.selectAll('path')
@@ -132,30 +144,39 @@ const AmericasMap = () => {
           .append('path')
           .attr('d', path)
           .attr('fill', d => {
-            const countryCode = d.properties.iso_a2;
-            return visitedCountries.has(countryCode) ? '#ffa500' : '#e9ecef';
+            const countryISO = countryToISO[d.properties.NAME];
+            const isVisited = countryISO && visitedCountries.has(countryISO);
+            return isVisited ? '#ffa500' : '#e9ecef';
           })
           .attr('stroke', '#fff')
           .attr('stroke-width', 0.5)
           .on('mouseover', function(event, d) {
+            const countryISO = countryToISO[d.properties.NAME];
+            const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
-              .attr('fill', visitedCountries.has(d.properties.iso_a2) ? '#ff8c00' : '#dee2e6');
+              .attr('fill', isVisited ? '#ff8c00' : '#dee2e6');
             
-            tooltip.transition()
-              .duration(200)
-              .style('opacity', .9);
-            
-            tooltip.html(d.properties.name)
-              .style('left', (event.pageX + 10) + 'px')
-              .style('top', (event.pageY - 28) + 'px');
+            tooltip
+              .style('visibility', 'visible')
+              .style('opacity', '1')
+              .html(d.properties.NAME)
+              .style('left', (event.clientX + 15) + 'px')
+              .style('top', (event.clientY - 15) + 'px');
+          })
+          .on('mousemove', function(event) {
+            tooltip
+              .style('left', (event.clientX + 15) + 'px')
+              .style('top', (event.clientY - 15) + 'px');
           })
           .on('mouseout', function(event, d) {
+            const countryISO = countryToISO[d.properties.NAME];
+            const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
-              .attr('fill', visitedCountries.has(d.properties.iso_a2) ? '#ffa500' : '#e9ecef');
+              .attr('fill', isVisited ? '#ffa500' : '#e9ecef');
             
-            tooltip.transition()
-              .duration(500)
-              .style('opacity', 0);
+            tooltip
+              .style('visibility', 'hidden')
+              .style('opacity', '0');
           });
 
         console.log('Map rendered successfully');

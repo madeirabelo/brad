@@ -8,7 +8,7 @@ const API_URL = 'http://192.168.31.33:5050/api';
 // Get the country to ISO mapping from the JSON file
 const countryToISO = countryToISOData.countries;
 
-const AfricaMap = () => {
+const AfricaMap = ({ showTitle = true }) => {
   const svgRef = useRef();
   const containerRef = useRef();
   const [visitedCountries, setVisitedCountries] = useState(new Set());
@@ -268,7 +268,7 @@ const AfricaMap = () => {
 
   return (
     <div className="map-container africa-map-container" ref={containerRef}>
-      <h2>Map of Africa</h2>
+      {showTitle && <h2>Map of Africa</h2>}
       <svg ref={svgRef}></svg>
       <div className="tooltip"></div>
     </div>

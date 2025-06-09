@@ -4,6 +4,7 @@ import './WorldMap.css';
 import countryToISOData from '../data/countryToISO.json';
 
 const API_URL = 'http://192.168.31.33:5050/api';
+const GEOJSON_URL = 'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
 
 // Temporary fallback mapping in case YAML loading fails
 const fallbackCountryToISO = {
@@ -18,26 +19,23 @@ const fallbackCountryToISO = {
 // Get the country to ISO mapping from the JSON file
 const countryToISO = countryToISOData.countries;
 
-const WorldMap = () => {
+const WorldMap = ({ showTitle = true }) => {
   const svgRef = useRef();
-  const tooltipRef = useRef();
+  const containerRef = useRef();
   const [visitedCountries, setVisitedCountries] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [mapData, setMapData] = useState(null);
 
   // Fetch visited countries
   useEffect(() => {
-    console.log('Fetching visited countries...');
     const fetchVisitedCountries = async () => {
       try {
         const response = await fetch(`${API_URL}/visited-countries/default-user`);
         const data = await response.json();
-        console.log('Raw API response:', data);
         
         // Convert country codes to uppercase for consistency
         const countries = data.countries.map(code => code.toUpperCase());
-        console.log('Converted to uppercase:', countries);
-        
         setVisitedCountries(new Set(countries));
       } catch (error) {
         console.error('Error fetching visited countries:', error);
@@ -48,169 +46,129 @@ const WorldMap = () => {
     fetchVisitedCountries();
   }, []);
 
+  // Fetch map data
+  useEffect(() => {
+    const fetchMapData = async () => {
+      try {
+        const response = await fetch(GEOJSON_URL);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        setMapData(data);
+      } catch (error) {
+        console.error('Error loading world data:', error);
+        setError('Failed to load world map data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchMapData();
+  }, []);
+
   // Render map
   useEffect(() => {
-    console.log('Starting map render...');
-    console.log('Current visited countries:', visitedCountries);
-    console.log('Country to ISO mapping:', countryToISO);
-    
-    if (!svgRef.current) {
-      console.log('SVG ref not ready');
-      return;
-    }
+    if (!mapData || !mapData.features) return;
 
-    const svg = d3.select(svgRef.current);
-    svg.selectAll('*').remove();
+    const renderMap = () => {
+      try {
+        const container = document.querySelector('.world-map-container');
+        if (!container) return;
 
-    // Get the container dimensions
-    const container = svgRef.current.parentElement;
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-    console.log('Container dimensions:', { width, height });
+        // Clear previous SVG
+        d3.select(container).select('svg').remove();
 
-    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+        // Get container dimensions
+        const { width, height } = container.getBoundingClientRect();
+        if (width === 0 || height === 0) {
+          console.warn('Container has zero dimensions');
+          return;
+        }
 
-    const projection = d3.geoMercator()
-      .fitSize([width - margin.left - margin.right, height - margin.top - margin.bottom], { type: 'Sphere' });
+        // Create SVG
+        const svg = d3.select(container)
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height);
 
-    const path = d3.geoPath().projection(projection);
+        // Create projection
+        const projection = d3.geoMercator()
+          .fitSize([width, height], mapData)
+          .translate([width / 2, height / 2]);
 
-    // Create tooltip div
-    const tooltipDiv = d3.select('body')
-      .append('div')
-      .attr('class', 'tooltip')
-      .style('position', 'fixed')
-      .style('visibility', 'hidden')
-      .style('background-color', 'rgba(0, 0, 0, 0.8)')
-      .style('color', 'white')
-      .style('padding', '8px 12px')
-      .style('border-radius', '4px')
-      .style('font-size', '14px')
-      .style('font-weight', 'bold')
-      .style('pointer-events', 'none')
-      .style('z-index', '9999')
-      .style('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.2)')
-      .style('transition', 'opacity 0.2s');
+        // Create path generator
+        const path = d3.geoPath().projection(projection);
 
-    // Store tooltip div reference
-    tooltipRef.current = tooltipDiv;
-
-    // Load world data
-    console.log('Loading world data...');
-    d3.json('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
-      .then(data => {
-        console.log('World data loaded');
-        console.log('Number of countries:', data.features.length);
-
-        // Debug: Log all country codes and their properties
-        console.log('All country codes with properties:', data.features.map(f => ({
-          name: f.properties.name,
-          iso_a2: countryToISO[f.properties.name] || 'unknown'
-        })));
-        console.log('Visited country codes:', Array.from(visitedCountries));
+        // Create tooltip
+        const tooltip = d3.select(container)
+          .append('div')
+          .attr('class', 'tooltip')
+          .style('opacity', 0);
 
         // Draw countries
         svg.selectAll('path')
-          .data(data.features)
+          .data(mapData.features)
           .enter()
           .append('path')
           .attr('d', path)
-          .attr('class', d => {
-            const countryISO = countryToISO[d.properties.name];
-            const isVisited = countryISO && visitedCountries.has(countryISO);
-            console.log(`Country ${d.properties.name} (${countryISO}) visited:`, isVisited);
-            return `country ${isVisited ? 'visited' : ''}`;
-          })
           .attr('fill', d => {
             const countryISO = countryToISO[d.properties.name];
             const isVisited = countryISO && visitedCountries.has(countryISO);
-            const fill = isVisited ? '#ffa500' : '#e9ecef';
-            console.log(`Setting fill for ${d.properties.name}: ${fill}`);
-            return fill;
+            return isVisited ? '#ffa500' : '#e9ecef';
           })
-          .attr('stroke', '#ffffff')
+          .attr('stroke', '#fff')
           .attr('stroke-width', 0.5)
           .on('mouseover', function(event, d) {
             const countryISO = countryToISO[d.properties.name];
             const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
-              .attr('fill', isVisited ? '#ffb700' : '#dee2e6');
+              .attr('fill', isVisited ? '#ff8c00' : '#dee2e6');
             
-            const countryName = d.properties.name;
-            tooltipDiv
-              .style('visibility', 'visible')
-              .style('opacity', '1')
-              .html(countryName)
-              .style('left', (event.clientX + 15) + 'px')
-              .style('top', (event.clientY - 15) + 'px');
-          })
-          .on('mousemove', function(event) {
-            tooltipDiv
-              .style('left', (event.clientX + 15) + 'px')
-              .style('top', (event.clientY - 15) + 'px');
+            tooltip.transition()
+              .duration(200)
+              .style('opacity', .9);
+            
+            tooltip.html(d.properties.name)
+              .style('left', (event.pageX + 10) + 'px')
+              .style('top', (event.pageY - 28) + 'px');
           })
           .on('mouseout', function(event, d) {
             const countryISO = countryToISO[d.properties.name];
             const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
               .attr('fill', isVisited ? '#ffa500' : '#e9ecef');
-            tooltipDiv
-              .style('visibility', 'hidden')
-              .style('opacity', '0');
+            
+            tooltip.transition()
+              .duration(500)
+              .style('opacity', 0);
           });
 
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Error loading world data:', error);
-        setError('Failed to load world map data');
-        setIsLoading(false);
-      });
+        console.log('Map rendered successfully');
+      } catch (error) {
+        console.error('Error rendering map:', error);
+        setError('Failed to render map');
+      }
+    };
+
+    renderMap();
 
     // Handle window resize
     const handleResize = () => {
-      const newWidth = container.clientWidth;
-      const newHeight = container.clientHeight;
-      const isMobile = newWidth < 768;
-      const newScale = isMobile ? newWidth / 6 : newWidth / 3 / Math.PI;
-
-      // Update SVG dimensions
-      svg
-        .attr('width', newWidth)
-        .attr('height', newHeight);
-
-      // Update projection
-      projection
-        .scale(newScale)
-        .translate([newWidth / 2, newHeight / 2]);
-
-      // Update paths
-      svg.selectAll('path')
-        .attr('d', path);
+      renderMap();
     };
 
     window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [mapData, visitedCountries]);
 
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      if (tooltipRef.current) {
-        tooltipRef.current.remove();
-      }
-    };
-  }, [visitedCountries]); // Re-run when visited countries change
-
-  if (error) {
-    return <div className="error-message">Error: {error}</div>;
-  }
+  if (isLoading) return <div className="loading">Loading map...</div>;
+  if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="map-container">
-      <h2>World Map</h2>
-      <div className="world-map-container">
-        {isLoading && <div className="loading">Loading map...</div>}
-        <svg ref={svgRef} className="world-map"></svg>
-      </div>
+    <div className="map-container world-map-container">
+      {showTitle && <h2>World Map</h2>}
+      <div className="tooltip"></div>
     </div>
   );
 };

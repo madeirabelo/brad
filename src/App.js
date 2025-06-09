@@ -21,11 +21,9 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={
-              <div className="maps-container">
-                <AsiaMap />
-                <WorldMap />
-                <AfricaMap />
-                <AustraliaMap />
+              <div className="home-container">
+                <h1>Welcome to Your Travel Map</h1>
+                <p>Use the menu to explore different regions of the world and track your visited countries.</p>
               </div>
             } />
             <Route path="/travels/world" element={<WorldMap />} />
