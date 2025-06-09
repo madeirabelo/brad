@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import './WorldMap.css';
 import countryToISOData from '../data/countryToISO.json';
@@ -6,22 +6,10 @@ import countryToISOData from '../data/countryToISO.json';
 const API_URL = 'http://192.168.31.33:5050/api';
 const GEOJSON_URL = 'https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson';
 
-// Temporary fallback mapping in case YAML loading fails
-const fallbackCountryToISO = {
-  'France': 'FR',
-  'Germany': 'DE',
-  'Italy': 'IT',
-  'Spain': 'ES',
-  'United Kingdom': 'GB',
-  'United States': 'US'
-};
-
 // Get the country to ISO mapping from the JSON file
 const countryToISO = countryToISOData.countries;
 
 const WorldMap = ({ showTitle = true }) => {
-  const svgRef = useRef();
-  const containerRef = useRef();
   const [visitedCountries, setVisitedCountries] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
