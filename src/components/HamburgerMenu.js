@@ -14,7 +14,12 @@ const HamburgerMenu = () => {
       path: '/travels',
       submenu: [
         { id: '2.1', text: 'Visited Countries', path: '/travels/countries' },
-        { id: '2.2', text: 'World Map', path: '/travels/map' }
+        { id: '2.2', text: 'World Map', path: '/travels/map' },
+        { id: '2.3', text: 'Americas', path: '/travels/americas' },
+        { id: '2.4', text: 'Europe', path: '/travels/europe' },
+        { id: '2.5', text: 'Asia', path: '/travels/asia' },
+        { id: '2.6', text: 'Africa', path: '/travels/africa' },
+        { id: '2.7', text: 'Australia', path: '/travels/australia' }
       ]
     },
     { id: 3, text: 'Game Chess', path: '/chess' },

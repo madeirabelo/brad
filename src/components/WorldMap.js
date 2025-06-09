@@ -1,240 +1,29 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import './WorldMap.css';
+import countryToISOData from '../data/countryToISO.json';
 
 const API_URL = 'http://192.168.31.33:5050/api';
 
-// Mapping of country names to ISO codes
-const countryToISO = {
-  // A
-  'Afghanistan': 'AF',
-  'Albania': 'AL',
-  'Algeria': 'DZ',
-  'Andorra': 'AD',
-  'Angola': 'AO',
-  'Antigua and Barbuda': 'AG',
-  'Argentina': 'AR',
-  'Armenia': 'AM',
-  'Australia': 'AU',
-  'Austria': 'AT',
-  'Azerbaijan': 'AZ',
-  // B
-  'Bahamas': 'BS',
-  'Bahrain': 'BH',
-  'Bangladesh': 'BD',
-  'Barbados': 'BB',
-  'Belarus': 'BY',
-  'Belgium': 'BE',
-  'Belize': 'BZ',
-  'Benin': 'BJ',
-  'Bhutan': 'BT',
-  'Bolivia': 'BO',
-  'Bosnia and Herzegovina': 'BA',
-  'Botswana': 'BW',
-  'Brazil': 'BR',
-  'Brunei': 'BN',
-  'Bulgaria': 'BG',
-  'Burkina Faso': 'BF',
-  'Burundi': 'BI',
-  // C
-  'Cabo Verde': 'CV',
-  'Cambodia': 'KH',
-  'Cameroon': 'CM',
-  'Canada': 'CA',
-  'Central African Republic': 'CF',
-  'Chad': 'TD',
-  'Chile': 'CL',
-  'China': 'CN',
-  'Colombia': 'CO',
-  'Comoros': 'KM',
-  'Congo': 'CG',
-  'Costa Rica': 'CR',
-  'Croatia': 'HR',
-  'Cuba': 'CU',
-  'Cyprus': 'CY',
-  'Czech Republic': 'CZ',
-  'Czechia': 'CZ',
-  // D
-  'Denmark': 'DK',
-  'Djibouti': 'DJ',
-  'Dominica': 'DM',
-  'Dominican Republic': 'DO',
-  // E
-  'Ecuador': 'EC',
-  'Egypt': 'EG',
-  'El Salvador': 'SV',
-  'Equatorial Guinea': 'GQ',
-  'Eritrea': 'ER',
-  'Estonia': 'EE',
-  'Eswatini': 'SZ',
-  'Ethiopia': 'ET',
-  // F
-  'Fiji': 'FJ',
-  'Finland': 'FI',
+// Temporary fallback mapping in case YAML loading fails
+const fallbackCountryToISO = {
   'France': 'FR',
-  // G
-  'Gabon': 'GA',
-  'Gambia': 'GM',
-  'Georgia': 'GE',
   'Germany': 'DE',
-  'Ghana': 'GH',
-  'Greece': 'GR',
-  'Grenada': 'GD',
-  'Guatemala': 'GT',
-  'Guinea': 'GN',
-  'Guinea-Bissau': 'GW',
-  'Guyana': 'GY',
-  // H
-  'Haiti': 'HT',
-  'Honduras': 'HN',
-  'Hungary': 'HU',
-  // I
-  'Iceland': 'IS',
-  'India': 'IN',
-  'Indonesia': 'ID',
-  'Iran': 'IR',
-  'Iraq': 'IQ',
-  'Ireland': 'IE',
-  'Israel': 'IL',
   'Italy': 'IT',
-  'Ivory Coast': 'CI',
-  // J
-  'Jamaica': 'JM',
-  'Japan': 'JP',
-  'Jordan': 'JO',
-  // K
-  'Kazakhstan': 'KZ',
-  'Kenya': 'KE',
-  'Kiribati': 'KI',
-  'Kuwait': 'KW',
-  'Kyrgyzstan': 'KG',
-  // L
-  'Laos': 'LA',
-  'Latvia': 'LV',
-  'Lebanon': 'LB',
-  'Lesotho': 'LS',
-  'Liberia': 'LR',
-  'Libya': 'LY',
-  'Liechtenstein': 'LI',
-  'Lithuania': 'LT',
-  'Luxembourg': 'LU',
-  // M
-  'Madagascar': 'MG',
-  'Malawi': 'MW',
-  'Malaysia': 'MY',
-  'Maldives': 'MV',
-  'Mali': 'ML',
-  'Malta': 'MT',
-  'Marshall Islands': 'MH',
-  'Mauritania': 'MR',
-  'Mauritius': 'MU',
-  'Mexico': 'MX',
-  'Micronesia': 'FM',
-  'Moldova': 'MD',
-  'Monaco': 'MC',
-  'Mongolia': 'MN',
-  'Montenegro': 'ME',
-  'Morocco': 'MA',
-  'Mozambique': 'MZ',
-  'Myanmar': 'MM',
-  // N
-  'Namibia': 'NA',
-  'Nauru': 'NR',
-  'Nepal': 'NP',
-  'Netherlands': 'NL',
-  'New Zealand': 'NZ',
-  'Nicaragua': 'NI',
-  'Niger': 'NE',
-  'Nigeria': 'NG',
-  'North Korea': 'KP',
-  'North Macedonia': 'MK',
-  'Norway': 'NO',
-  // O
-  'Oman': 'OM',
-  // P
-  'Pakistan': 'PK',
-  'Palau': 'PW',
-  'Palestine': 'PS',
-  'Panama': 'PA',
-  'Papua New Guinea': 'PG',
-  'Paraguay': 'PY',
-  'Peru': 'PE',
-  'Philippines': 'PH',
-  'Poland': 'PL',
-  'Portugal': 'PT',
-  // Q
-  'Qatar': 'QA',
-  // R
-  'Romania': 'RO',
-  'Russia': 'RU',
-  'Rwanda': 'RW',
-  // S
-  'Saint Kitts and Nevis': 'KN',
-  'Saint Lucia': 'LC',
-  'Saint Vincent and the Grenadines': 'VC',
-  'Samoa': 'WS',
-  'San Marino': 'SM',
-  'Sao Tome and Principe': 'ST',
-  'Saudi Arabia': 'SA',
-  'Senegal': 'SN',
-  'Serbia': 'RS',
-  'Seychelles': 'SC',
-  'Sierra Leone': 'SL',
-  'Singapore': 'SG',
-  'Slovakia': 'SK',
-  'Slovenia': 'SI',
-  'Solomon Islands': 'SB',
-  'Somalia': 'SO',
-  'South Africa': 'ZA',
-  'South Korea': 'KR',
-  'South Sudan': 'SS',
   'Spain': 'ES',
-  'Sri Lanka': 'LK',
-  'Sudan': 'SD',
-  'Suriname': 'SR',
-  'Sweden': 'SE',
-  'Switzerland': 'CH',
-  'Syria': 'SY',
-  // T
-  'Taiwan': 'TW',
-  'Tajikistan': 'TJ',
-  'Tanzania': 'TZ',
-  'Thailand': 'TH',
-  'Timor-Leste': 'TL',
-  'Togo': 'TG',
-  'Tonga': 'TO',
-  'Trinidad and Tobago': 'TT',
-  'Tunisia': 'TN',
-  'Turkey': 'TR',
-  'Turkmenistan': 'TM',
-  'Tuvalu': 'TV',
-  // U
-  'Uganda': 'UG',
-  'Ukraine': 'UA',
-  'United Arab Emirates': 'AE',
   'United Kingdom': 'GB',
-  'United States': 'US',
-  'United States of America': 'US',
-  'USA': 'US',
-  'Uruguay': 'UY',
-  'Uzbekistan': 'UZ',
-  // V
-  'Vanuatu': 'VU',
-  'Vatican City': 'VA',
-  'Venezuela': 'VE',
-  'Vietnam': 'VN',
-  // Y
-  'Yemen': 'YE',
-  // Z
-  'Zambia': 'ZM',
-  'Zimbabwe': 'ZW'
+  'United States': 'US'
 };
+
+// Get the country to ISO mapping from the JSON file
+const countryToISO = countryToISOData.countries;
 
 const WorldMap = () => {
   const svgRef = useRef();
   const tooltipRef = useRef();
   const [visitedCountries, setVisitedCountries] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Fetch visited countries
   useEffect(() => {
@@ -252,6 +41,7 @@ const WorldMap = () => {
         setVisitedCountries(new Set(countries));
       } catch (error) {
         console.error('Error fetching visited countries:', error);
+        setError('Failed to fetch visited countries');
       }
     };
 
@@ -262,6 +52,7 @@ const WorldMap = () => {
   useEffect(() => {
     console.log('Starting map render...');
     console.log('Current visited countries:', visitedCountries);
+    console.log('Country to ISO mapping:', countryToISO);
     
     if (!svgRef.current) {
       console.log('SVG ref not ready');
@@ -288,15 +79,18 @@ const WorldMap = () => {
     const tooltipDiv = d3.select('body')
       .append('div')
       .attr('class', 'tooltip')
-      .style('position', 'absolute')
+      .style('position', 'fixed')
       .style('visibility', 'hidden')
       .style('background-color', 'rgba(0, 0, 0, 0.8)')
       .style('color', 'white')
-      .style('padding', '5px 10px')
+      .style('padding', '8px 12px')
       .style('border-radius', '4px')
       .style('font-size', '14px')
+      .style('font-weight', 'bold')
       .style('pointer-events', 'none')
-      .style('z-index', '1000');
+      .style('z-index', '9999')
+      .style('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.2)')
+      .style('transition', 'opacity 0.2s');
 
     // Store tooltip div reference
     tooltipRef.current = tooltipDiv;
@@ -341,26 +135,35 @@ const WorldMap = () => {
             const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
               .attr('fill', isVisited ? '#ffb700' : '#dee2e6');
+            
             const countryName = d.properties.name;
             tooltipDiv
               .style('visibility', 'visible')
+              .style('opacity', '1')
               .html(countryName)
-              .style('left', (event.pageX + 10) + 'px')
-              .style('top', (event.pageY - 10) + 'px');
+              .style('left', (event.clientX + 15) + 'px')
+              .style('top', (event.clientY - 15) + 'px');
           })
           .on('mousemove', function(event) {
             tooltipDiv
-              .style('left', (event.pageX + 10) + 'px')
-              .style('top', (event.pageY - 10) + 'px');
+              .style('left', (event.clientX + 15) + 'px')
+              .style('top', (event.clientY - 15) + 'px');
           })
-          .on('mouseout', function() {
-            tooltipDiv.style('visibility', 'hidden');
+          .on('mouseout', function(event, d) {
+            const countryISO = countryToISO[d.properties.name];
+            const isVisited = countryISO && visitedCountries.has(countryISO);
+            d3.select(this)
+              .attr('fill', isVisited ? '#ffa500' : '#e9ecef');
+            tooltipDiv
+              .style('visibility', 'hidden')
+              .style('opacity', '0');
           });
 
         setIsLoading(false);
       })
       .catch(error => {
         console.error('Error loading world data:', error);
+        setError('Failed to load world map data');
         setIsLoading(false);
       });
 
@@ -397,10 +200,17 @@ const WorldMap = () => {
     };
   }, [visitedCountries]); // Re-run when visited countries change
 
+  if (error) {
+    return <div className="error-message">Error: {error}</div>;
+  }
+
   return (
-    <div className="world-map-container">
-      {isLoading && <div className="loading">Loading map...</div>}
-      <svg ref={svgRef} className="world-map"></svg>
+    <div className="map-container">
+      <h2>World Map</h2>
+      <div className="world-map-container">
+        {isLoading && <div className="loading">Loading map...</div>}
+        <svg ref={svgRef} className="world-map"></svg>
+      </div>
     </div>
   );
 };

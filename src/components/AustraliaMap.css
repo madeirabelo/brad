@@ -1,0 +1,72 @@
+.map-container.australia-map-container {
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.australia-map-container h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
+  text-align: center;
+}
+
+.australia-map-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.australia-map-container .loading,
+.australia-map-container .error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 1000;
+}
+
+.australia-map-container .error {
+  color: #dc3545;
+}
+
+.australia-map-container .tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: opacity 0.2s;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .australia-map-container {
+    height: 80vh;
+    padding: 10px;
+  }
+
+  .australia-map-container h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+} 

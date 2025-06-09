@@ -3,7 +3,6 @@ users:
     countries:
       - GB
       - US
-      - AR
       - CR
       - PY
       - PT
@@ -18,4 +17,8 @@ users:
       - JP
       - KR
       - DE
-    lastUpdated: '2025-06-08T23:33:27.573Z'
+      - AR
+      - BR
+      - MX
+      - PA
+    lastUpdated: '2025-06-09T12:53:47.243Z'

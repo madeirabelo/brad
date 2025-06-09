@@ -16,7 +16,7 @@
   }
 }
 
-.App-header {
+header {
   background-color: #282c34;
   min-height: 70px;
   display: flex;
@@ -52,4 +52,64 @@ h1 {
   font-size: 2.5rem;
   margin: 0;
   padding: 2rem 0;
+}
+
+.maps-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.map-container {
+  width: 100%;
+  max-width: 1200px;
+  padding: 20px;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.map-container h2 {
+  margin-bottom: 1rem;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.world-map-container {
+  width: 100%;
+  height: 50vh;
+  min-height: 400px;
+  position: relative;
+}
+
+.america-map-container,
+.americas-map-container,
+.europe-map-container {
+  width: 100%;
+  height: 40vh;
+  min-height: 300px;
+  position: relative;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.error-message {
+  color: #dc3545;
+  padding: 1rem;
+  margin: 1rem;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  background-color: #f8d7da;
 }

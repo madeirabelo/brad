@@ -1,0 +1,228 @@
+import React, { useEffect, useRef, useState } from 'react';
+import * as d3 from 'd3';
+import './EuropeMap.css';
+import countryToISOData from '../data/countryToISO.json';
+
+const API_URL = 'http://192.168.31.33:5050/api';
+
+// Get the country to ISO mapping from the JSON file
+const countryToISO = countryToISOData.countries;
+
+const EuropeMap = () => {
+  const svgRef = useRef();
+  const containerRef = useRef();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mapData, setMapData] = useState(null);
+  const [visitedCountries, setVisitedCountries] = useState(new Set());
+
+  // First effect: Fetch visited countries
+  useEffect(() => {
+    console.log('Fetching visited countries...');
+    const fetchVisitedCountries = async () => {
+      try {
+        const response = await fetch(`${API_URL}/visited-countries/default-user`);
+        const data = await response.json();
+        console.log('Raw API response:', data);
+        
+        // Convert country codes to uppercase for consistency
+        const countries = data.countries.map(code => code.toUpperCase());
+        console.log('Converted to uppercase:', countries);
+        
+        setVisitedCountries(new Set(countries));
+      } catch (error) {
+        console.error('Error fetching visited countries:', error);
+        setError('Failed to fetch visited countries');
+      }
+    };
+
+    fetchVisitedCountries();
+  }, []);
+
+  // Second effect: Fetch the map data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('Fetching map data...');
+        const response = await fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        if (!data.features || !Array.isArray(data.features)) {
+          throw new Error('Invalid GeoJSON data structure');
+        }
+        
+        // Filter for European countries
+        const europeFeatures = data.features.filter(feature => {
+          const props = feature.properties;
+          const continent = props.CONTINENT;
+          const name = props.NAME;
+          
+          // Include European countries and some transcontinental countries
+          const isEurope = 
+            continent === 'Europe' ||
+            // Include some transcontinental countries that are primarily in Europe
+            (name === 'Russia' || name === 'Turkey' || name === 'Kazakhstan');
+          
+          return isEurope;
+        });
+        
+        if (europeFeatures.length === 0) {
+          throw new Error('No European countries found in the data');
+        }
+
+        console.log(`Found ${europeFeatures.length} European countries`);
+        setMapData(europeFeatures);
+      } catch (err) {
+        console.error('Error loading map:', err);
+        setError(`Failed to load map data: ${err.message}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const renderMap = (features) => {
+    if (!svgRef.current || !containerRef.current) {
+      return;
+    }
+
+    try {
+      console.log('Rendering map...');
+      const svg = d3.select(svgRef.current);
+      svg.selectAll('*').remove();
+
+      // Get container dimensions
+      const containerWidth = containerRef.current.clientWidth;
+      const containerHeight = containerRef.current.clientHeight - 50; // Subtract space for title
+
+      // Set SVG dimensions
+      svg.attr('width', containerWidth)
+         .attr('height', containerHeight)
+         .attr('viewBox', `0 0 ${containerWidth} ${containerHeight}`);
+
+      // Calculate scale based on screen width and aspect ratio
+      let scale;
+      const aspectRatio = containerWidth / containerHeight;
+      
+      if (containerWidth > 1200) {
+        // Large horizontal screens
+        scale = containerWidth / (aspectRatio > 1.5 ? 5 : 3.5);
+      } else if (containerWidth > 768) {
+        // Medium screens
+        scale = containerWidth / (aspectRatio > 1.5 ? 3.5 : 2.5);
+      } else {
+        // Mobile screens
+        scale = containerWidth / 2;
+      }
+
+      // Create the projection centered on Europe
+      const projection = d3.geoMercator()
+        .center([45, 65])
+        .scale(scale)
+        .translate([containerWidth / 2, containerHeight / 2]);
+
+      const path = d3.geoPath().projection(projection);
+
+      // Create tooltip div
+      const tooltipDiv = d3.select('body')
+        .append('div')
+        .attr('class', 'tooltip')
+        .style('position', 'fixed')
+        .style('visibility', 'hidden')
+        .style('background-color', 'rgba(0, 0, 0, 0.8)')
+        .style('color', 'white')
+        .style('padding', '8px 12px')
+        .style('border-radius', '4px')
+        .style('font-size', '14px')
+        .style('font-weight', 'bold')
+        .style('pointer-events', 'none')
+        .style('z-index', '9999')
+        .style('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.2)')
+        .style('transition', 'opacity 0.2s');
+
+      // Draw the countries
+      svg.append('g')
+        .selectAll('path')
+        .data(features)
+        .enter()
+        .append('path')
+        .attr('d', path)
+        .attr('fill', d => {
+          const countryISO = countryToISO[d.properties.NAME];
+          const isVisited = countryISO && visitedCountries.has(countryISO);
+          return isVisited ? '#ffa500' : '#e9ecef';
+        })
+        .attr('stroke', '#ffffff')
+        .attr('stroke-width', 0.5)
+        .on('mouseover', function(event, d) {
+          const countryISO = countryToISO[d.properties.NAME];
+          const isVisited = countryISO && visitedCountries.has(countryISO);
+          d3.select(this)
+            .attr('fill', isVisited ? '#ffb700' : '#dee2e6');
+          tooltipDiv
+            .style('visibility', 'visible')
+            .style('opacity', '1')
+            .html(d.properties.NAME)
+            .style('left', (event.clientX + 15) + 'px')
+            .style('top', (event.clientY - 15) + 'px');
+        })
+        .on('mousemove', function(event) {
+          tooltipDiv
+            .style('left', (event.clientX + 15) + 'px')
+            .style('top', (event.clientY - 15) + 'px');
+        })
+        .on('mouseout', function(event, d) {
+          const countryISO = countryToISO[d.properties.NAME];
+          const isVisited = countryISO && visitedCountries.has(countryISO);
+          d3.select(this)
+            .attr('fill', isVisited ? '#ffa500' : '#e9ecef');
+          tooltipDiv
+            .style('visibility', 'hidden')
+            .style('opacity', '0');
+        });
+
+      console.log('Map rendered successfully');
+    } catch (err) {
+      console.error('Error rendering map:', err);
+      setError(`Failed to render map: ${err.message}`);
+    }
+  };
+
+  // Third effect: Handle map rendering and window resize
+  useEffect(() => {
+    if (!mapData) return;
+
+    // Initial render
+    renderMap(mapData);
+
+    // Handle window resize
+    const handleResize = () => {
+      renderMap(mapData);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [mapData, visitedCountries]); // Re-run when map data or visited countries change
+
+  if (loading) return <div className="loading">Loading map...</div>;
+  if (error) return <div className="error">{error}</div>;
+
+  return (
+    <div className="map-container europe-map-container" ref={containerRef}>
+      <h2>Map of Europe</h2>
+      <svg ref={svgRef}></svg>
+      <div className="tooltip"></div>
+    </div>
+  );
+};
+
+export default EuropeMap; 

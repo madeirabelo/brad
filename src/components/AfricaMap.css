@@ -1,0 +1,58 @@
+.africa-map-container {
+  width: 100%;
+  height: calc(100vh - 60px); /* Subtract the height of the header/navbar */
+  position: relative;
+  overflow: hidden;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+}
+
+.africa-map {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2em;
+  color: #666;
+}
+
+.error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2em;
+  color: #dc3545;
+  text-align: center;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .africa-map-container {
+    height: calc(100dvh - 70px); /* Use dynamic viewport height minus header */
+    padding: 10px;
+  }
+} 
