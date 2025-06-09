@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import HamburgerMenu from './components/HamburgerMenu';
 import VisitedCountries from './components/VisitedCountries';
+import WorldMap from './components/WorldMap';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Routes>
             <Route path="/" element={<h1>Welcome to Brad</h1>} />
             <Route path="/travels/countries" element={<VisitedCountries />} />
+            <Route path="/travels/map" element={<WorldMap />} />
             <Route path="*" element={<h1>Page not found</h1>} />
           </Routes>
         </main>

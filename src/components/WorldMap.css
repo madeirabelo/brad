@@ -1,0 +1,54 @@
+.world-map-container {
+  width: 100%;
+  height: calc(100vh - 60px); /* Subtract the height of the header/navbar */
+  position: relative;
+  overflow: hidden;
+}
+
+.world-map {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.2em;
+  color: #666;
+}
+
+.country {
+  transition: fill 0.3s ease;
+}
+
+.country.visited {
+  fill: #ffa500;
+  stroke: #ffb700;
+  stroke-width: 1;
+}
+
+.country.visited:hover {
+  fill: #ffb700;
+  stroke-width: 1.5;
+}
+
+.tooltip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .world-map-container {
+    height: calc(100dvh - 70px); /* Use dynamic viewport height minus header */
+  }
+} 

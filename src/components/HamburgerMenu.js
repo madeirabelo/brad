@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './HamburgerMenu.css';
 
 const HamburgerMenu = () => {
@@ -45,6 +46,9 @@ const HamburgerMenu = () => {
       
       <nav className={`menu ${isOpen ? 'open' : ''}`}>
         <ul className="main-menu">
+          <li>
+            <Link to="/" onClick={toggleMenu}>Home</Link>
+          </li>
           {menuItems.map((item) => (
             <li key={item.id} className={item.submenu ? 'has-submenu' : ''}>
               {item.submenu ? (
@@ -59,17 +63,17 @@ const HamburgerMenu = () => {
                   <ul className={`submenu ${expandedItem === item.id ? 'expanded' : ''}`}>
                     {item.submenu.map((subItem) => (
                       <li key={subItem.id}>
-                        <a href={subItem.path} onClick={() => setIsOpen(false)}>
+                        <Link to={subItem.path} onClick={() => setIsOpen(false)}>
                           {subItem.text}
-                        </a>
+                        </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
               ) : (
-                <a href={item.path} onClick={() => setIsOpen(false)}>
+                <Link to={item.path} onClick={() => setIsOpen(false)}>
                   {item.text}
-                </a>
+                </Link>
               )}
             </li>
           ))}
