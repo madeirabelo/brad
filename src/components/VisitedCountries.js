@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './VisitedCountries.css';
 
-const API_URL = 'http://192.168.31.33:5050/api';
+const API_URL = 'http://localhost:5050/api';
 const STORAGE_KEY = 'visitedCountries';
 const STORAGE_VERSION = '1.0';
 
