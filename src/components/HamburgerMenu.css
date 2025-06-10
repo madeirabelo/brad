@@ -1,6 +1,8 @@
-.hamburger-menu {
-  position: relative;
-  margin: 1rem;
+.hamburger-menu-fixed {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000;
 }
 
 .hamburger-button {
@@ -9,155 +11,108 @@
   justify-content: space-around;
   width: 2.5rem;
   height: 2.5rem;
-  background: transparent;
+  background: #23272f;
   border: none;
   cursor: pointer;
-  padding: 0;
-  z-index: 10;
+  padding: 0.5rem;
+  border-radius: 6px;
+  z-index: 2001;
 }
 
 .hamburger-button span {
-  width: 2.5rem;
-  height: 0.3rem;
-  background: white;
+  width: 2rem;
+  height: 0.25rem;
+  background: #fff;
   border-radius: 10px;
   transition: all 0.3s linear;
   position: relative;
   transform-origin: 1px;
 }
 
-.hamburger-button span:first-child {
-  transform: rotate(0);
-}
-
-.hamburger-button span:nth-child(2) {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.hamburger-button span:nth-child(3) {
-  transform: rotate(0);
-}
-
 .hamburger-button.open span:first-child {
-  transform: rotate(45deg);
+  transform: rotate(45deg) translate(5px, 5px);
 }
-
 .hamburger-button.open span:nth-child(2) {
   opacity: 0;
-  transform: translateX(20px);
 }
-
 .hamburger-button.open span:nth-child(3) {
-  transform: rotate(-45deg);
+  transform: rotate(-45deg) translate(5px, -5px);
 }
 
-.menu {
+.menu-overlay {
   position: fixed;
   top: 0;
-  right: -300px;
-  width: 300px;
+  right: -320px;
+  width: 320px;
   height: 100vh;
-  background: white;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-  transition: right 0.3s ease-in-out;
-  z-index: 5;
+  background: #23272f;
+  box-shadow: -2px 0 8px rgba(0,0,0,0.15);
+  transition: right 0.3s cubic-bezier(.77,0,.18,1);
+  z-index: 2000;
+  color: #fff;
+  overflow-y: auto;
+  padding-top: 60px;
   text-align: left;
-  visibility: hidden;
 }
-
-.menu.open {
+.menu-overlay.open {
   right: 0;
-  visibility: visible;
 }
 
 .main-menu {
   list-style: none;
   padding: 0;
-  margin: 80px 0 0 0;
+  margin: 0;
   text-align: left;
 }
-
-.main-menu > li {
-  border-bottom: 1px solid #eee;
-  text-align: left;
-}
-
-.main-menu > li > a {
+.main-menu > li > a,
+.menu-item-with-submenu {
   text-decoration: none;
-  color: #333;
+  color: #fff;
   font-size: 1.2rem;
-  transition: color 0.3s ease;
   display: block;
   padding: 1rem 2rem;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
   text-align: left;
 }
-
-.main-menu > li > a:hover {
-  color: #007bff;
+.main-menu > li > a:hover,
+.menu-item-with-submenu:hover {
+  background: #343a40;
+  color: #ffd700;
 }
-
-/* Submenu styles */
-.submenu-container {
-  position: relative;
-  text-align: left;
-}
-
 .menu-item-with-submenu {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  cursor: pointer;
-  color: #333;
-  font-size: 1.2rem;
-  border-bottom: 1px solid #eee;
   text-align: left;
 }
-
-.menu-item-with-submenu:hover {
-  color: #007bff;
-}
-
 .submenu-arrow {
-  font-size: 0.8rem;
-  transition: transform 0.3s ease;
-  margin-left: 0.5rem;
+  margin-left: 1rem;
+  transition: transform 0.3s;
 }
-
 .submenu-arrow.expanded {
   transform: rotate(180deg);
 }
-
 .submenu {
-  background: #f8f9fa;
-  min-width: 180px;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-  border-radius: 4px;
-  padding: 0.5rem 0;
-  margin: 0.5rem 0 0 0;
+  background: #23272f;
+  padding: 0;
+  margin: 0;
   display: none;
-  max-height: 300px;
-  overflow-y: auto;
-  position: static;
+  text-align: left;
 }
-
 .submenu.expanded {
   display: block;
 }
-
-.submenu li {
-  padding: 0.5rem 1rem;
-  white-space: nowrap;
-}
-
 .submenu li a {
-  color: #333;
-  text-decoration: none;
+  color: #fff;
+  font-size: 1.05rem;
+  padding: 0.7rem 2.5rem;
   display: block;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
 }
-
 .submenu li a:hover {
-  background: #e9ecef;
+  background: #343a40;
+  color: #ffd700;
 } 

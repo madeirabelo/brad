@@ -1,6 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import './WorldMap.css';
+import countryToISOData from '../data/countryToISO.json';
+
+// Get the country to ISO mapping from the JSON file
+const countryToISO = countryToISOData.countries;
 
 // List of American countries' ISO codes (2-letter)
 const AMERICAS_ISO = [
@@ -40,7 +44,12 @@ const AmericaMap = () => {
     d3.json('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
       .then(data => {
         // Filter to only American countries
-        const features = data.features.filter(f => AMERICAS_ISO.includes(f.id));
+        const features = data.features.filter(f => {
+          const countryName = f.properties.name;
+          const countryCode = countryToISO[countryName];
+          return AMERICAS_ISO.includes(countryCode);
+        });
+        
         // Projection centered on Americas
         const projection = d3.geoMercator()
           .fitSize([
@@ -63,7 +72,7 @@ const AmericaMap = () => {
             d3.select(this).attr('fill', '#b3c6e7');
             tooltipDiv
               .style('visibility', 'visible')
-              .html(d.properties.name)
+              .html(`${d.properties.name} (${countryToISO[d.properties.name] || 'N/A'})`)
               .style('left', (event.pageX + 10) + 'px')
               .style('top', (event.pageY - 10) + 'px');
           })

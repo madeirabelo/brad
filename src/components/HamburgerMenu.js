@@ -19,7 +19,9 @@ const HamburgerMenu = () => {
         { id: '2.4', text: 'Europe', path: '/travels/europe' },
         { id: '2.5', text: 'Asia', path: '/travels/asia' },
         { id: '2.6', text: 'Africa', path: '/travels/africa' },
-        { id: '2.7', text: 'Australia', path: '/travels/australia' }
+        { id: '2.7', text: 'Australia', path: '/travels/australia' },
+        { id: '2.8', text: 'Visited Argentina', path: '/travels/visited-argentina' },
+        { id: '2.9', text: 'Argentina Map', path: '/travels/argentina-map' }
       ]
     },
     { id: 3, text: 'Game Chess', path: '/chess' },
@@ -38,7 +40,7 @@ const HamburgerMenu = () => {
   };
 
   return (
-    <div className="hamburger-menu">
+    <div className="hamburger-menu-fixed">
       <button 
         className={`hamburger-button ${isOpen ? 'open' : ''}`}
         onClick={toggleMenu}
@@ -48,8 +50,7 @@ const HamburgerMenu = () => {
         <span></span>
         <span></span>
       </button>
-      
-      <nav className={`menu ${isOpen ? 'open' : ''}`}>
+      <nav className={`menu-overlay ${isOpen ? 'open' : ''}`}>
         <ul className="main-menu">
           <li>
             <Link to="/" onClick={toggleMenu}>Home</Link>
@@ -68,7 +69,10 @@ const HamburgerMenu = () => {
                   <ul className={`submenu ${expandedItem === item.id ? 'expanded' : ''}`}>
                     {item.submenu.map((subItem) => (
                       <li key={subItem.id}>
-                        <Link to={subItem.path} onClick={() => setIsOpen(false)}>
+                        <Link to={subItem.path} onClick={() => {
+                          setIsOpen(false);
+                          setExpandedItem(null);
+                        }}>
                           {subItem.text}
                         </Link>
                       </li>

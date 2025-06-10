@@ -1,67 +1,44 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import * as d3 from 'd3';
-import { API_URL, USE_LOCAL_STORAGE_FALLBACK, STORAGE_KEY, STORAGE_VERSION } from '../config';
-import './AmericasMap.css';
-import countryToISOData from '../data/countryToISO.json';
+import './ArgentinaMap.css';
 
-const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_0_countries.geojson';
-
-// Get the country to ISO mapping from the JSON file
-const countryToISO = countryToISOData.countries;
-
-const AmericasMap = () => {
-  const svgRef = useRef();
-  const containerRef = useRef();
+const VisitedArgentinaMap = () => {
+  const [visitedProvinces, setVisitedProvinces] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapData, setMapData] = useState(null);
-  const [visitedCountries, setVisitedCountries] = useState(new Set());
+  const containerRef = useRef(null);
+  const svgRef = useRef(null);
 
-  // Load from localStorage
-  const loadFromStorage = () => {
-    try {
-      const savedData = localStorage.getItem(STORAGE_KEY);
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        if (parsedData.version === STORAGE_VERSION) {
-          setVisitedCountries(new Set(parsedData.countries));
-          return true;
-        }
-      }
-    } catch (error) {
-      console.error('Error loading from localStorage:', error);
-    }
-    return false;
-  };
+  // GeoJSON URL for Argentine provinces
+  const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson';
 
-  // First effect: Fetch visited countries
+  // Fetch visited provinces
   useEffect(() => {
-    console.log('Fetching visited countries...');
-    const fetchVisitedCountries = async () => {
+    const fetchVisitedProvinces = async () => {
       try {
-        const response = await fetch(`${API_URL}/visited-countries/default-user`);
+        const response = await fetch('http://localhost:5050/api/visited-provincias/default-user');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         console.log('Raw API response:', data);
         
-        // Convert country codes to uppercase for consistency
-        const countries = data.countries.map(code => code.toUpperCase());
-        console.log('Converted to uppercase:', countries);
-        
-        setVisitedCountries(new Set(countries));
-      } catch (error) {
-        console.error('Error fetching visited countries:', error);
-        if (USE_LOCAL_STORAGE_FALLBACK) {
-          console.log('Falling back to localStorage...');
-          if (!loadFromStorage()) {
-            setError('Failed to fetch visited countries and no local data available');
-          }
+        // Check if data has the expected structure
+        if (data && data.provincias && Array.isArray(data.provincias)) {
+          setVisitedProvinces(new Set(data.provincias));
         } else {
-          setError('Failed to fetch visited countries');
+          console.warn('Unexpected API response structure:', data);
+          setVisitedProvinces(new Set());
         }
+      } catch (error) {
+        console.error('Error fetching visited provinces:', error);
+        setError('Failed to load visited provinces');
+        setVisitedProvinces(new Set());
       }
     };
 
-    fetchVisitedCountries();
+    fetchVisitedProvinces();
   }, []);
 
   // Fetch and render map data
@@ -79,25 +56,20 @@ const AmericasMap = () => {
           throw new Error('Invalid GeoJSON data structure');
         }
         
-        // Filter for Americas countries
-        const americasFeatures = data.features.filter(feature => {
+        // Filter for Argentine provinces
+        const argentinaProvinces = data.features.filter(feature => {
           const props = feature.properties;
-          const continent = props.CONTINENT;
-          const name = props.NAME;
-          
-          // Include both North and South American countries, but exclude Greenland
-          return (continent === 'North America' || continent === 'South America') && 
-                 name !== 'Greenland';
+          return props.admin === 'Argentina';
         });
         
-        if (americasFeatures.length === 0) {
-          throw new Error('No Americas countries found in the data');
+        if (argentinaProvinces.length === 0) {
+          throw new Error('No Argentine provinces found');
         }
 
-        console.log(`Found ${americasFeatures.length} Americas countries`);
+        console.log('Found provinces data');
         setMapData({
           ...data,
-          features: americasFeatures
+          features: argentinaProvinces
         });
       } catch (error) {
         console.error('Error fetching map data:', error);
@@ -116,7 +88,7 @@ const AmericasMap = () => {
 
     const renderMap = () => {
       try {
-        const container = document.querySelector('.americas-map-container');
+        const container = document.querySelector('.argentina-map-container');
         if (!container) return;
 
         // Clear previous SVG
@@ -135,10 +107,10 @@ const AmericasMap = () => {
           .attr('width', width)
           .attr('height', height);
 
-        // Create projection
+        // Create projection centered on Argentina
         const projection = d3.geoMercator()
-          .center([-90, 0]) // Center on Americas
-          .scale(200) // Reduced scale to show more of the continent
+          .center([-65, -43]) // Center on Argentina
+          .scale(800)
           .translate([width / 2, height / 2]);
 
         // Create path generator
@@ -161,29 +133,23 @@ const AmericasMap = () => {
           .style('box-shadow', '0 2px 4px rgba(0, 0, 0, 0.2)')
           .style('transition', 'opacity 0.2s');
 
-        // Draw countries
+        // Draw provinces
         svg.selectAll('path')
           .data(mapData.features)
           .enter()
           .append('path')
           .attr('d', path)
-          .attr('fill', d => {
-            const countryISO = countryToISO[d.properties.NAME];
-            const isVisited = countryISO && visitedCountries.has(countryISO);
-            return isVisited ? '#ffa500' : '#e9ecef';
-          })
+          .attr('fill', d => visitedProvinces.has(d.properties.name) ? '#ffa500' : '#e9ecef')
           .attr('stroke', '#fff')
           .attr('stroke-width', 0.5)
           .on('mouseover', function(event, d) {
-            const countryISO = countryToISO[d.properties.NAME];
-            const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
-              .attr('fill', isVisited ? '#ff8c00' : '#dee2e6');
+              .attr('fill', visitedProvinces.has(d.properties.name) ? '#ff8c00' : '#dee2e6');
             
             tooltip
               .style('visibility', 'visible')
               .style('opacity', '1')
-              .html(d.properties.NAME)
+              .html(d.properties.name)
               .style('left', (event.clientX + 15) + 'px')
               .style('top', (event.clientY - 15) + 'px');
           })
@@ -193,10 +159,8 @@ const AmericasMap = () => {
               .style('top', (event.clientY - 15) + 'px');
           })
           .on('mouseout', function(event, d) {
-            const countryISO = countryToISO[d.properties.NAME];
-            const isVisited = countryISO && visitedCountries.has(countryISO);
             d3.select(this)
-              .attr('fill', isVisited ? '#ffa500' : '#e9ecef');
+              .attr('fill', visitedProvinces.has(d.properties.name) ? '#ffa500' : '#e9ecef');
             
             tooltip
               .style('visibility', 'hidden')
@@ -219,18 +183,18 @@ const AmericasMap = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [mapData, visitedCountries]);
+  }, [mapData, visitedProvinces]);
 
   if (loading) return <div className="loading">Loading map...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
-    <div className="map-container americas-map-container" ref={containerRef}>
-      <h2>Map of the Americas</h2>
+    <div className="map-container argentina-map-container" ref={containerRef}>
+      <h2>Visited Provinces of Argentina</h2>
       <svg ref={svgRef}></svg>
       <div className="tooltip"></div>
     </div>
   );
 };
 
-export default AmericasMap; 
+export default VisitedArgentinaMap; 

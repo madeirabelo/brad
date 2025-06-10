@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import countryToISOData from '../data/countryToISO.json';
+import { API_URL, USE_LOCAL_STORAGE_FALLBACK, STORAGE_KEY, STORAGE_VERSION, INITIAL_VISITED_COUNTRIES } from '../config';
 import './AfricaMap.css';
-
-const API_URL = 'http://192.168.31.33:5050/api';
+import countryToISOData from '../data/countryToISO.json';
 
 // Get the country to ISO mapping from the JSON file
 const countryToISO = countryToISOData.countries;
+
+const GEOJSON_URL = 'https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson';
 
 const AfricaMap = ({ showTitle = true }) => {
   const svgRef = useRef();
@@ -16,23 +17,57 @@ const AfricaMap = ({ showTitle = true }) => {
   const [error, setError] = useState(null);
   const [mapData, setMapData] = useState(null);
 
-  // First effect: Fetch visited countries
+  // Load from localStorage
+  const loadFromStorage = () => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      console.log('Loading from localStorage:', savedData);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        console.log('Parsed localStorage data:', parsedData);
+        if (parsedData.version === STORAGE_VERSION) {
+          const countries = parsedData.countries.map(code => code.toUpperCase());
+          console.log('Setting visited countries from localStorage:', countries);
+          setVisitedCountries(new Set(countries));
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+    return false;
+  };
+
+  // Fetch visited countries
   useEffect(() => {
-    console.log('Fetching visited countries...');
     const fetchVisitedCountries = async () => {
       try {
+        console.log('Attempting to fetch from API:', `${API_URL}/visited-countries/default-user`);
         const response = await fetch(`${API_URL}/visited-countries/default-user`);
         const data = await response.json();
         console.log('Raw API response:', data);
         
         // Convert country codes to uppercase for consistency
         const countries = data.countries.map(code => code.toUpperCase());
-        console.log('Converted to uppercase:', countries);
-        
+        console.log('Setting visited countries from API:', countries);
         setVisitedCountries(new Set(countries));
       } catch (error) {
         console.error('Error fetching visited countries:', error);
-        setError('Failed to fetch visited countries');
+        if (USE_LOCAL_STORAGE_FALLBACK) {
+          console.log('Falling back to localStorage...');
+          if (!loadFromStorage()) {
+            console.log('No data in localStorage, initializing with default data');
+            const initialData = {
+              version: STORAGE_VERSION,
+              timestamp: new Date().toISOString(),
+              countries: INITIAL_VISITED_COUNTRIES
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+            setVisitedCountries(new Set(INITIAL_VISITED_COUNTRIES));
+          }
+        } else {
+          setError('Failed to fetch visited countries');
+        }
       }
     };
 
@@ -44,7 +79,7 @@ const AfricaMap = ({ showTitle = true }) => {
     const fetchData = async () => {
       try {
         console.log('Fetching map data...');
-        const response = await fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson');
+        const response = await fetch(GEOJSON_URL);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

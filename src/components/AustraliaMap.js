@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { API_URL, USE_LOCAL_STORAGE_FALLBACK, STORAGE_KEY, STORAGE_VERSION } from '../config';
 import countryToISOData from '../data/countryToISO.json';
 import './AustraliaMap.css';
-
-const API_URL = 'http://192.168.31.33:5050/api';
 
 // Get the country to ISO mapping from the JSON file
 const countryToISO = countryToISOData.countries;
@@ -15,6 +14,23 @@ const AustraliaMap = ({ showTitle = true }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mapData, setMapData] = useState(null);
+
+  // Load from localStorage
+  const loadFromStorage = () => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        if (parsedData.version === STORAGE_VERSION) {
+          setVisitedCountries(new Set(parsedData.countries));
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+    return false;
+  };
 
   // First effect: Fetch visited countries
   useEffect(() => {
@@ -32,7 +48,14 @@ const AustraliaMap = ({ showTitle = true }) => {
         setVisitedCountries(new Set(countries));
       } catch (error) {
         console.error('Error fetching visited countries:', error);
-        setError('Failed to fetch visited countries');
+        if (USE_LOCAL_STORAGE_FALLBACK) {
+          console.log('Falling back to localStorage...');
+          if (!loadFromStorage()) {
+            setError('Failed to fetch visited countries and no local data available');
+          }
+        } else {
+          setError('Failed to fetch visited countries');
+        }
       }
     };
 

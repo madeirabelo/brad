@@ -4,6 +4,7 @@ const fs = require('fs');
 const yaml = require('js-yaml');
 const path = require('path');
 const os = require('os');
+const visitedProvinciasRouter = require('./routes/visitedProvincias');
 
 const app = express();
 
@@ -14,6 +15,9 @@ app.use(express.json());
 // Path to the YAML file
 const DATA_FILE = path.join(__dirname, 'data', 'visited_countries.yaml');
 
+// Path to the provincias YAML file
+const PROVINCIAS_FILE = path.join(__dirname, 'data', 'visited_provincias.yaml');
+
 // Ensure the data directory exists
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
@@ -23,6 +27,11 @@ if (!fs.existsSync(dataDir)) {
 // Ensure the YAML file exists
 if (!fs.existsSync(DATA_FILE)) {
   fs.writeFileSync(DATA_FILE, yaml.dump({ users: {} }));
+}
+
+// Ensure the provincias YAML file exists
+if (!fs.existsSync(PROVINCIAS_FILE)) {
+  fs.writeFileSync(PROVINCIAS_FILE, yaml.dump({}));
 }
 
 // Helper functions to read/write YAML
@@ -42,6 +51,27 @@ const writeData = (data) => {
     return true;
   } catch (error) {
     console.error('Error writing YAML file:', error);
+    return false;
+  }
+};
+
+// Helper functions for provincias
+const readProvincias = () => {
+  try {
+    const fileContents = fs.readFileSync(PROVINCIAS_FILE, 'utf8');
+    return yaml.load(fileContents) || {};
+  } catch (error) {
+    console.error('Error reading provincias YAML file:', error);
+    return {};
+  }
+};
+
+const writeProvincias = (data) => {
+  try {
+    fs.writeFileSync(PROVINCIAS_FILE, yaml.dump(data));
+    return true;
+  } catch (error) {
+    console.error('Error writing provincias YAML file:', error);
     return false;
   }
 };
@@ -85,6 +115,8 @@ app.post('/api/visited-countries/:userId', (req, res) => {
     res.status(500).json({ error: 'Failed to update visited countries' });
   }
 });
+
+app.use('/api/visited-provincias', visitedProvinciasRouter);
 
 const PORT = process.env.PORT || 5050;
 app.listen(PORT, '0.0.0.0', () => {

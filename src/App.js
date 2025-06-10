@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './App.css';
 import HamburgerMenu from './components/HamburgerMenu';
@@ -10,8 +10,17 @@ import VisitedCountries from './components/VisitedCountries';
 import AmericaMap from './components/AmericaMap';
 import AmericasMap from './components/AmericasMap';
 import EuropeMap from './components/EuropeMap';
+import ArgentinaMap from './components/ArgentinaMap';
+import VisitedProvincias from './components/VisitedProvincias';
+import VisitedArgentinaMap from './components/VisitedArgentinaMap';
+import { initializeLocalStorage } from './config';
 
 function App() {
+  // Initialize local storage with default data when the app starts
+  useEffect(() => {
+    initializeLocalStorage();
+  }, []);
+
   return (
     <Router>
       <div className="App">
@@ -35,6 +44,9 @@ function App() {
             <Route path="/travels/america-map" element={<AmericaMap />} />
             <Route path="/travels/americas" element={<AmericasMap />} />
             <Route path="/travels/europe" element={<EuropeMap />} />
+            <Route path="/travels/argentina" element={<ArgentinaMap />} />
+            <Route path="/travels/visited-argentina" element={<VisitedProvincias />} />
+            <Route path="/travels/argentina-map" element={<VisitedArgentinaMap />} />
             <Route path="*" element={<h1>Page not found</h1>} />
           </Routes>
         </main>
