@@ -24,7 +24,7 @@ start_backend() {
 # Function to start the frontend server
 start_frontend() {
     echo "Starting frontend server..."
-    HOST=0.0.0.0 npm start &
+    npm start &
     echo $! > .frontend.pid
 }
 

@@ -13,6 +13,7 @@ import EuropeMap from './components/EuropeMap';
 import ArgentinaMap from './components/ArgentinaMap';
 import VisitedProvincias from './components/VisitedProvincias';
 import VisitedArgentinaMap from './components/VisitedArgentinaMap';
+import ChessGame from './components/Chess';
 import { initializeLocalStorage } from './config';
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
             <Route path="/travels/argentina" element={<ArgentinaMap />} />
             <Route path="/travels/visited-argentina" element={<VisitedProvincias />} />
             <Route path="/travels/argentina-map" element={<VisitedArgentinaMap />} />
+            <Route path="/chess" element={<ChessGame />} />
             <Route path="*" element={<h1>Page not found</h1>} />
           </Routes>
         </main>
