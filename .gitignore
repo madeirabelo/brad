@@ -29,6 +29,9 @@ pids
 *.seed
 *.pid.lock
 
+# deployment artifacts
+deploy.tar.gz
+
 # server data
 server/data/chess/
 server/data/chess_games.yaml

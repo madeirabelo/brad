@@ -5,7 +5,6 @@ users:
       - US
       - CR
       - PY
-      - PT
       - ES
       - FR
       - NL
@@ -21,4 +20,6 @@ users:
       - BR
       - MX
       - PA
-    lastUpdated: '2025-06-10T20:47:03.057Z'
+      - PT
+      - AT
+    lastUpdated: '2025-06-12T21:20:10.304Z'

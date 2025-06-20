@@ -14,6 +14,8 @@ import ArgentinaMap from './components/ArgentinaMap';
 import VisitedProvincias from './components/VisitedProvincias';
 import VisitedArgentinaMap from './components/VisitedArgentinaMap';
 import ChessGame from './components/Chess';
+import Go from './components/Go';
+import Xiangqi from './components/Xiangqi';
 import { initializeLocalStorage } from './config';
 
 function App() {
@@ -49,6 +51,8 @@ function App() {
             <Route path="/travels/visited-argentina" element={<VisitedProvincias />} />
             <Route path="/travels/argentina-map" element={<VisitedArgentinaMap />} />
             <Route path="/chess" element={<ChessGame />} />
+            <Route path="/go" element={<Go />} />
+            <Route path="/xiangqi" element={<Xiangqi />} />
             <Route path="*" element={<h1>Page not found</h1>} />
           </Routes>
         </main>

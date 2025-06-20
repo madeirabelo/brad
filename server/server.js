@@ -14,6 +14,12 @@ app.use(cors());
 // Parse JSON bodies
 app.use(express.json());
 
+const visitedCountriesRouter = require('./routes/visitedCountries');
+app.use('/api/visited-countries', visitedCountriesRouter);
+
+const visitedProvinciasRouter = require('./routes/visitedProvincias');
+app.use('/api/visited-provincias', visitedProvinciasRouter);
+
 // Create data directory if it doesn't exist
 const GAMES_DIR = path.join(__dirname, 'data', 'chess');
 if (!fs.existsSync(GAMES_DIR)) {
