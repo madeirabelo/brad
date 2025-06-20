@@ -104,7 +104,7 @@ const Go = () => {
       ctx.arc(PADDING + c * CELL, PADDING + r * CELL, STAR_RADIUS, 0, 2 * Math.PI);
       ctx.fill();
     }
-  }, [boardSize, boardPx]);
+  }, [boardSize, boardPx, CELL, PADDING, STAR_RADIUS]);
 
   // Helper to show illegal move message
   const showIllegalMoveMsg = (msg) => {
