@@ -20,6 +20,9 @@ app.use('/api/visited-countries', visitedCountriesRouter);
 const visitedProvinciasRouter = require('./routes/visitedProvincias');
 app.use('/api/visited-provincias', visitedProvinciasRouter);
 
+const concertsRouter = require('./routes/concerts');
+app.use('/api/concerts', concertsRouter);
+
 // Create data directory if it doesn't exist
 const GAMES_DIR = path.join(__dirname, 'data', 'chess');
 if (!fs.existsSync(GAMES_DIR)) {
