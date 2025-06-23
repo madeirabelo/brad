@@ -1,58 +1,58 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import './Concerts.css';
+import './Movies.css';
 
-const Concerts = () => {
-  const [concerts, setConcerts] = useState([]);
-  const [filteredConcerts, setFilteredConcerts] = useState([]);
+const Movies = () => {
+  const [movies, setMovies] = useState([]);
+  const [filteredMovies, setFilteredMovies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('concert'); // 'concert' or 'vol'
+  const [sortBy, setSortBy] = useState('movie'); // 'movie' or 'vol'
 
   useEffect(() => {
-    fetchConcerts();
+    fetchMovies();
   }, []);
 
-  const filterAndSortConcerts = useCallback(() => {
-    let filtered = concerts;
+  const filterAndSortMovies = useCallback(() => {
+    let filtered = movies;
 
     // Filter by search query
     if (searchQuery.trim()) {
-      filtered = concerts.filter(concert =>
-        concert.concert && concert.concert.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = movies.filter(movie =>
+        movie.movie && movie.movie.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
-    // Sort concerts
+    // Sort movies
     filtered.sort((a, b) => {
-      if (sortBy === 'concert') {
-        return (a.concert || '').localeCompare(b.concert || '');
+      if (sortBy === 'movie') {
+        return (a.movie || '').localeCompare(b.movie || '');
       } else if (sortBy === 'vol') {
         return (a.vol || '').localeCompare(b.vol || '');
       }
       return 0;
     });
 
-    setFilteredConcerts(filtered);
-  }, [concerts, searchQuery, sortBy]);
+    setFilteredMovies(filtered);
+  }, [movies, searchQuery, sortBy]);
 
   useEffect(() => {
-    filterAndSortConcerts();
-  }, [filterAndSortConcerts]);
+    filterAndSortMovies();
+  }, [filterAndSortMovies]);
 
-  const fetchConcerts = async () => {
+  const fetchMovies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5050/api/concerts');
+      const response = await fetch('http://192.168.31.71:5050/api/movies');
       if (!response.ok) {
-        throw new Error('Failed to fetch concerts');
+        throw new Error('Failed to fetch movies');
       }
       const data = await response.json();
-      setConcerts(data.concerts || []);
+      setMovies(data.movies || []);
       setError(null);
     } catch (err) {
-      console.error('Error fetching concerts:', err);
-      setError('Failed to load concerts. Please try again later.');
+      console.error('Error fetching movies:', err);
+      setError('Failed to load movies. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -72,10 +72,10 @@ const Concerts = () => {
 
   if (loading) {
     return (
-      <div className="concerts-container">
-        <div className="concerts-loading">
+      <div className="movies-container">
+        <div className="movies-loading">
           <div className="loading-spinner"></div>
-          <p>Loading concerts...</p>
+          <p>Loading movies...</p>
         </div>
       </div>
     );
@@ -83,11 +83,11 @@ const Concerts = () => {
 
   if (error) {
     return (
-      <div className="concerts-container">
-        <div className="concerts-error">
+      <div className="movies-container">
+        <div className="movies-error">
           <h2>Error</h2>
           <p>{error}</p>
-          <button onClick={fetchConcerts} className="retry-button">
+          <button onClick={fetchMovies} className="retry-button">
             Try Again
           </button>
         </div>
@@ -96,19 +96,19 @@ const Concerts = () => {
   }
 
   return (
-    <div className="concerts-container">
-      <div className="concerts-header">
-        <h1>Concerts Collection</h1>
-        <p className="concerts-subtitle">
-          Browse through {concerts.length} concerts in your collection
+    <div className="movies-container">
+      <div className="movies-header">
+        <h1>Movies Collection</h1>
+        <p className="movies-subtitle">
+          Browse through {movies.length} movies in your collection
         </p>
       </div>
 
-      <div className="concerts-controls">
+      <div className="movies-controls">
         <div className="search-container">
           <input
             type="text"
-            placeholder="Search concerts..."
+            placeholder="Search movies..."
             value={searchQuery}
             onChange={handleSearchChange}
             className="search-input"
@@ -128,26 +128,26 @@ const Concerts = () => {
             onChange={handleSortChange}
             className="sort-select"
           >
-            <option value="concert">Concert Name</option>
+            <option value="movie">Movie Name</option>
             <option value="vol">Volume</option>
           </select>
         </div>
       </div>
 
-      <div className="concerts-stats">
+      <div className="movies-stats">
         <p>
-          Showing {filteredConcerts.length} of {concerts.length} concerts
+          Showing {filteredMovies.length} of {movies.length} movies
           {searchQuery && ` matching "${searchQuery}"`}
         </p>
       </div>
 
-      <div className="concerts-table-container">
-        {filteredConcerts.length === 0 ? (
+      <div className="movies-table-container">
+        {filteredMovies.length === 0 ? (
           <div className="no-results">
             <p>
               {searchQuery 
-                ? `No concerts found matching "${searchQuery}"`
-                : 'No concerts available'
+                ? `No movies found matching "${searchQuery}"`
+                : 'No movies available'
               }
             </p>
             {searchQuery && (
@@ -157,23 +157,23 @@ const Concerts = () => {
             )}
           </div>
         ) : (
-          <table className="concerts-table">
+          <table className="movies-table">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Concert Name</th>
+                <th>Movie Name</th>
                 <th>Volume</th>
               </tr>
             </thead>
             <tbody>
-              {filteredConcerts.map((concert, index) => (
-                <tr key={index} className="concert-row">
-                  <td className="concert-number">{index + 1}</td>
-                  <td className="concert-title-cell">
-                    {concert.concert || 'Untitled Concert'}
+              {filteredMovies.map((movie, index) => (
+                <tr key={index} className="movie-row">
+                  <td className="movie-number">{index + 1}</td>
+                  <td className="movie-title-cell">
+                    {movie.movie || 'Untitled Movie'}
                   </td>
-                  <td className="concert-volume-cell">
-                    {concert.vol || '-'}
+                  <td className="movie-volume-cell">
+                    {movie.vol || '-'}
                   </td>
                 </tr>
               ))}
@@ -182,14 +182,12 @@ const Concerts = () => {
         )}
       </div>
 
-      <div className="concerts-help">
+      <div className="movies-help">
         <h3>To add new sources:</h3>
         <div className="command-box">
           <code>
             {`volume=$(ls /Volumes/ | grep -v Mac | awk '{print $0}')
-gfind . -maxdepth 2 \\
-    ! -name "*.inf"  ! -path "*BDMV*" ! -path "*CERTIFICATE*" ! -path "*VIDEO_TS*" ! -name ".DS_Store"  ! -name "*.srt"  ! -name "*.txt" ! -name "*.jpg" ! -name "Scans" ! -name "Cover" \\
-    -printf "  - vol: $volume\\n    concert: \\"%P\\"\\n"  >>  ~/Documents/sw/raspberryPi/brad/server/data/concerts.yaml`}
+gfind . -maxdepth 1 -printf "  - vol: $volume\\n    movie: \\"%P\\"\\n" >>  ~/Documents/sw/raspberryPi/brad/server/data/movies.yaml`}
           </code>
         </div>
       </div>
@@ -197,4 +195,4 @@ gfind . -maxdepth 2 \\
   );
 };
 
-export default Concerts; 
+export default Movies; 

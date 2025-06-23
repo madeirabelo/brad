@@ -17,6 +17,7 @@ import ChessGame from './components/Chess';
 import Go from './components/Go';
 import Xiangqi from './components/Xiangqi';
 import Concerts from './components/Concerts';
+import Movies from './components/Movies';
 import { initializeLocalStorage } from './config';
 
 function App() {
@@ -52,6 +53,7 @@ function App() {
             <Route path="/travels/visited-argentina" element={<VisitedProvincias />} />
             <Route path="/travels/argentina-map" element={<VisitedArgentinaMap />} />
             <Route path="/concerts" element={<Concerts />} />
+            <Route path="/movies" element={<Movies />} />
             <Route path="/chess" element={<ChessGame />} />
             <Route path="/go" element={<Go />} />
             <Route path="/xiangqi" element={<Xiangqi />} />

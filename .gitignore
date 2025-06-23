@@ -36,6 +36,7 @@ deploy.tar.gz
 server/data/chess/
 server/data/chess_games.yaml
 server/data/concerts.yaml
+server/data/movies.yaml
 
 # IDE
 .idea/

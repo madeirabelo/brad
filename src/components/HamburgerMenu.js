@@ -8,25 +8,26 @@ const HamburgerMenu = () => {
 
   const menuItems = [
     { id: 1, text: 'Concerts', path: '/concerts' },
+    { id: 2, text: 'Movies', path: '/movies' },
     { 
-      id: 2, 
+      id: 3, 
       text: 'Travels Toti & Tope', 
       path: '/travels',
       submenu: [
-        { id: '2.1', text: 'Visited Countries', path: '/travels/countries' },
-        { id: '2.2', text: 'World Map', path: '/travels/map' },
-        { id: '2.3', text: 'Americas', path: '/travels/americas' },
-        { id: '2.4', text: 'Europe', path: '/travels/europe' },
-        { id: '2.5', text: 'Asia', path: '/travels/asia' },
-        { id: '2.6', text: 'Africa', path: '/travels/africa' },
-        { id: '2.7', text: 'Australia', path: '/travels/australia' },
-        { id: '2.8', text: 'Visited Argentina', path: '/travels/visited-argentina' },
-        { id: '2.9', text: 'Argentina Map', path: '/travels/argentina-map' }
+        { id: '3.1', text: 'Visited Countries', path: '/travels/countries' },
+        { id: '3.2', text: 'World Map', path: '/travels/map' },
+        { id: '3.3', text: 'Americas', path: '/travels/americas' },
+        { id: '3.4', text: 'Europe', path: '/travels/europe' },
+        { id: '3.5', text: 'Asia', path: '/travels/asia' },
+        { id: '3.6', text: 'Africa', path: '/travels/africa' },
+        { id: '3.7', text: 'Australia', path: '/travels/australia' },
+        { id: '3.8', text: 'Visited Argentina', path: '/travels/visited-argentina' },
+        { id: '3.9', text: 'Argentina Map', path: '/travels/argentina-map' }
       ]
     },
-    { id: 3, text: 'Game Chess', path: '/chess' },
-    { id: 4, text: 'Game Go', path: '/go' },
-    { id: 5, text: 'Xiangqi - Chinese Chess', path: '/xiangqi' },
+    { id: 4, text: 'Game Chess', path: '/chess' },
+    { id: 5, text: 'Game Go', path: '/go' },
+    { id: 6, text: 'Xiangqi - Chinese Chess', path: '/xiangqi' },
   ];
 
   const toggleMenu = () => {

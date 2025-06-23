@@ -23,6 +23,9 @@ app.use('/api/visited-provincias', visitedProvinciasRouter);
 const concertsRouter = require('./routes/concerts');
 app.use('/api/concerts', concertsRouter);
 
+const moviesRouter = require('./routes/movies');
+app.use('/api/movies', moviesRouter);
+
 // Create data directory if it doesn't exist
 const GAMES_DIR = path.join(__dirname, 'data', 'chess');
 if (!fs.existsSync(GAMES_DIR)) {
