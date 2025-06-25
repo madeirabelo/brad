@@ -14,6 +14,14 @@ const Mandelbrot = () => {
   });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  
+  // Touch state for mobile support
+  const [touchState, setTouchState] = useState({
+    isTouching: false,
+    touchStart: { x: 0, y: 0 },
+    initialDistance: 0,
+    initialZoom: 1
+  });
 
   // Color schemes - wrapped in useMemo to prevent recreation on every render
   const colorSchemes = useMemo(() => ({
@@ -160,7 +168,13 @@ const Mandelbrot = () => {
     // Set line style
     ctx.strokeStyle = '#FFFFFF';
     ctx.lineWidth = 1.5;
-    ctx.font = 'bold 18px Arial';
+    
+    // Responsive font size based on canvas width
+    const isMobile = width < 600;
+    const fontSize = isMobile ? 12 : 18;
+    const lineHeight = isMobile ? 14 : 20;
+    
+    ctx.font = `bold ${fontSize}px Arial`;
     ctx.fillStyle = '#FFFFFF';
     
     // Calculate coordinate ranges
@@ -181,22 +195,27 @@ const Mandelbrot = () => {
     ctx.lineTo(width, centerY);
     ctx.stroke();
     
-    // Draw edge labels
-    ctx.textAlign = 'left';
-    ctx.fillText(`x min = ${left.toFixed(3)}`, 5, centerY - 12);
-    ctx.textAlign = 'right';
-    ctx.fillText(`x max = ${right.toFixed(3)}`, width - 5, centerY - 12);
-    ctx.textAlign = 'center';
-    ctx.fillText(`y min = ${top.toFixed(3)}`, centerX, 24);
-    ctx.fillText(`y max = ${bottom.toFixed(3)}`, centerX, height - 10);
+    // Responsive positioning
+    const edgeMargin = isMobile ? 3 : 5;
+    const topMargin = isMobile ? 16 : 24;
+    const bottomMargin = isMobile ? 8 : 10;
     
-    // Draw corner labels
+    // Draw edge labels with smaller text on mobile
     ctx.textAlign = 'left';
-    ctx.fillText(`(${left.toFixed(3)}, ${top.toFixed(3)})`, 5, 24);
-    ctx.fillText(`(${left.toFixed(3)}, ${bottom.toFixed(3)})`, 5, height - 10);
+    ctx.fillText(`x min = ${left.toFixed(3)}`, edgeMargin, centerY - (lineHeight / 2));
     ctx.textAlign = 'right';
-    ctx.fillText(`(${right.toFixed(3)}, ${top.toFixed(3)})`, width - 5, 24);
-    ctx.fillText(`(${right.toFixed(3)}, ${bottom.toFixed(3)})`, width - 5, height - 10);
+    ctx.fillText(`x max = ${right.toFixed(3)}`, width - edgeMargin, centerY - (lineHeight / 2));
+    ctx.textAlign = 'center';
+    ctx.fillText(`y min = ${top.toFixed(3)}`, centerX, topMargin);
+    ctx.fillText(`y max = ${bottom.toFixed(3)}`, centerX, height - bottomMargin);
+    
+    // Draw corner labels with smaller text on mobile
+    ctx.textAlign = 'left';
+    ctx.fillText(`(${left.toFixed(3)}, ${top.toFixed(3)})`, edgeMargin, topMargin);
+    ctx.fillText(`(${left.toFixed(3)}, ${bottom.toFixed(3)})`, edgeMargin, height - bottomMargin);
+    ctx.textAlign = 'right';
+    ctx.fillText(`(${right.toFixed(3)}, ${top.toFixed(3)})`, width - edgeMargin, topMargin);
+    ctx.fillText(`(${right.toFixed(3)}, ${bottom.toFixed(3)})`, width - edgeMargin, height - bottomMargin);
     
     ctx.restore();
   };
@@ -300,10 +319,120 @@ const Mandelbrot = () => {
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
     let newZoom = viewState.zoom * zoomFactor;
     if (newZoom < 0.01) newZoom = 0.01;
+    if (newZoom > 1000) newZoom = 1000;
     setViewState(prev => ({
       ...prev,
       zoom: newZoom
     }));
+  };
+
+  // Touch event handlers for mobile support
+  const getTouchDistance = (touches) => {
+    if (touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getTouchCenter = (touches) => {
+    if (touches.length === 0) return { x: 0, y: 0 };
+    if (touches.length === 1) {
+      return { x: touches[0].clientX, y: touches[0].clientY };
+    }
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+  };
+
+  const handleTouchStart = (e) => {
+    // Only prevent default if we have touches to handle
+    const touches = Array.from(e.touches);
+    if (touches.length > 0) {
+      e.preventDefault();
+    }
+    
+    if (touches.length === 1) {
+      // Single touch - start panning
+      setTouchState({
+        isTouching: true,
+        touchStart: { x: touches[0].clientX, y: touches[0].clientY },
+        initialDistance: 0,
+        initialZoom: viewState.zoom
+      });
+    } else if (touches.length === 2) {
+      // Two touches - start zooming
+      const distance = getTouchDistance(touches);
+      const center = getTouchCenter(touches);
+      setTouchState({
+        isTouching: true,
+        touchStart: center,
+        initialDistance: distance,
+        initialZoom: viewState.zoom
+      });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    // Only prevent default if we're actively handling touches
+    if (touchState.isTouching) {
+      e.preventDefault();
+    }
+    
+    const touches = Array.from(e.touches);
+    
+    if (!touchState.isTouching) return;
+
+    if (touches.length === 1 && touchState.initialDistance === 0) {
+      // Single touch panning
+      const canvas = canvasRef.current;
+      const dx = (touches[0].clientX - touchState.touchStart.x) / canvas.width;
+      const dy = (touches[0].clientY - touchState.touchStart.y) / canvas.height;
+
+      const scale = 4 / viewState.zoom;
+      const newCenterX = viewState.centerX - dx * scale;
+      const newCenterY = viewState.centerY - dy * scale;
+
+      setViewState(prev => ({
+        ...prev,
+        centerX: newCenterX,
+        centerY: newCenterY
+      }));
+
+      setTouchState(prev => ({
+        ...prev,
+        touchStart: { x: touches[0].clientX, y: touches[0].clientY }
+      }));
+    } else if (touches.length === 2 && touchState.initialDistance > 0) {
+      // Two touch zooming
+      const currentDistance = getTouchDistance(touches);
+      
+      if (touchState.initialDistance > 0) {
+        const zoomFactor = currentDistance / touchState.initialDistance;
+        let newZoom = touchState.initialZoom * zoomFactor;
+        if (newZoom < 0.01) newZoom = 0.01;
+        if (newZoom > 1000) newZoom = 1000;
+        
+        setViewState(prev => ({
+          ...prev,
+          zoom: newZoom
+        }));
+      }
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    // Only prevent default if we were handling touches
+    if (touchState.isTouching) {
+      e.preventDefault();
+    }
+    
+    setTouchState({
+      isTouching: false,
+      touchStart: { x: 0, y: 0 },
+      initialDistance: 0,
+      initialZoom: 1
+    });
   };
 
   // Control handlers
@@ -339,12 +468,22 @@ const Mandelbrot = () => {
     }));
   };
 
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const wheelListener = (e) => handleWheel(e);
+    canvas.addEventListener('wheel', wheelListener, { passive: false });
+    return () => {
+      canvas.removeEventListener('wheel', wheelListener, { passive: false });
+    };
+  }, [handleWheel]);
+
   return (
     <div className="mandelbrot-container">
       <h1>Mandelbrot Fractal Explorer</h1>
       
       <div className="mandelbrot-info">
-        <p>Click and drag to pan, scroll to zoom. Explore the infinite complexity of the Mandelbrot set!</p>
+        <p>Click and drag to pan, scroll to zoom. On mobile, touch and drag to pan, pinch to zoom. Explore the infinite complexity of the Mandelbrot set!</p>
       </div>
 
       <div className="mandelbrot-controls">
@@ -407,7 +546,9 @@ const Mandelbrot = () => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
         />
         {isRendering && (
@@ -421,8 +562,8 @@ const Mandelbrot = () => {
       <div className="mandelbrot-instructions">
         <h3>How to Explore</h3>
         <ul>
-          <li><strong>Pan:</strong> Click and drag to move around the fractal</li>
-          <li><strong>Zoom:</strong> Use mouse wheel to zoom in and out</li>
+          <li><strong>Pan:</strong> Click and drag (desktop) or touch and drag (mobile) to move around the fractal</li>
+          <li><strong>Zoom:</strong> Use mouse wheel (desktop) or pinch with two fingers (mobile) to zoom in and out</li>
           <li><strong>Reset:</strong> Click "Reset View" to return to the starting position</li>
           <li><strong>Colors:</strong> Try different color schemes to see the fractal in new ways</li>
           <li><strong>Detail:</strong> Increase iterations for more detailed rendering (slower)</li>
