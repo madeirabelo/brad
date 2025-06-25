@@ -28,6 +28,7 @@ const HamburgerMenu = () => {
     { id: 4, text: 'Game Chess', path: '/chess' },
     { id: 5, text: 'Game Go', path: '/go' },
     { id: 6, text: 'Xiangqi - Chinese Chess', path: '/xiangqi' },
+    { id: 7, text: 'Mandelbrot Fractal', path: '/mandelbrot' }
   ];
 
   const toggleMenu = () => {

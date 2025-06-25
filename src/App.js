@@ -18,6 +18,7 @@ import Go from './components/Go';
 import Xiangqi from './components/Xiangqi';
 import Concerts from './components/Concerts';
 import Movies from './components/Movies';
+import Mandelbrot from './components/Mandelbrot';
 import { initializeLocalStorage } from './config';
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
             <Route path="/chess" element={<ChessGame />} />
             <Route path="/go" element={<Go />} />
             <Route path="/xiangqi" element={<Xiangqi />} />
+            <Route path="/mandelbrot" element={<Mandelbrot />} />
             <Route path="*" element={<h1>Page not found</h1>} />
           </Routes>
         </main>
