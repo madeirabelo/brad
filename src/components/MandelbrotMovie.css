@@ -1,0 +1,154 @@
+.mandelbrot-movie-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: white;
+}
+
+.movie-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.movie-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.movie-header p {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.video-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.mandelbrot-video {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  background: #000;
+}
+
+.movie-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 2rem;
+  margin-top: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.movie-info h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.movie-info p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  opacity: 0.9;
+}
+
+.video-controls-info {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.video-controls-info h4 {
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.video-controls-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.video-controls-info li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+}
+
+.video-controls-info li:last-child {
+  border-bottom: none;
+}
+
+.video-controls-info strong {
+  color: #ffd700;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mandelbrot-movie-container {
+    padding: 1rem;
+  }
+  
+  .movie-header h1 {
+    font-size: 2rem;
+  }
+  
+  .movie-header p {
+    font-size: 1rem;
+  }
+  
+  .video-container {
+    padding: 10px;
+  }
+  
+  .movie-info {
+    padding: 1.5rem;
+  }
+  
+  .movie-info h3 {
+    font-size: 1.3rem;
+  }
+  
+  .movie-info p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mandelbrot-movie-container {
+    padding: 0.5rem;
+  }
+  
+  .movie-header h1 {
+    font-size: 1.8rem;
+  }
+  
+  .video-container {
+    padding: 5px;
+  }
+  
+  .movie-info {
+    padding: 1rem;
+  }
+  
+  .video-controls-info {
+    padding: 1rem;
+  }
+} 

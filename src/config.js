@@ -1,4 +1,6 @@
 // API configuration
+// In development: REACT_APP_API_URL=http://192.168.31.71:5050
+// In production (Raspberry Pi): REACT_APP_API_URL=http://localhost:5050 or leave undefined
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5050';
 export const API_URL = `${API_BASE_URL}/api`;
 

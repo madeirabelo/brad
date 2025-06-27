@@ -8,16 +8,16 @@ const DEFAULT_BOARD_PX = 432; // 48*9
 // Piece codes: r=rook, n=knight, b=elephant, a=advisor, k=general, c=cannon, p=pawn
 // Red is uppercase, Black is lowercase
 const initialBoard = [
-  ['r','n','b','a','k','a','b','n','r'],
-  [null,'c',null,null,null,null,null,'c',null],
-  ['p',null,'p',null,'p',null,'p',null,'p'],
-  [null,null,null,null,null,null,null,null,null],
-  [null,null,null,null,null,null,null,null,null],
-  [null,null,null,null,null,null,null,null,null], // extra row for river
-  [null,null,null,null,null,null,null,null,null],
-  ['P',null,'P',null,'P',null,'P',null,'P'],
-  [null,'C',null,null,null,null,null,'C',null],
-  ['R','N','B','A','K','A','B','N','R'],
+  ['r','n','b','a','k','a','b','n','r'], // 10 (Black)
+  [null,null,null,null,null,null,null,null,null], // 9
+  [null,'c',null,null,null,null,null,'c',null], // 8
+  ['p',null,'p',null,'p',null,'p',null,'p'], // 7
+  [null,null,null,null,null,null,null,null,null], // 6
+  [null,null,null,null,null,null,null,null,null], // 5
+  ['P',null,'P',null,'P',null,'P',null,'P'], // 4
+  [null,'C',null,null,null,null,null,'C',null], // 3
+  [null,null,null,null,null,null,null,null,null], // 2
+  ['R','N','B','A','K','A','B','N','R'], // 1 (Red)
 ];
 
 const pieceNames = {
@@ -68,6 +68,11 @@ function Xiangqi() {
   const [message, setMessage] = useState('');
   const [capturedRed, setCapturedRed] = useState([]); // black captures red
   const [capturedBlack, setCapturedBlack] = useState([]); // red captures black
+  const [hoveredPosition, setHoveredPosition] = useState(null); // {row, col, coord}
+
+  const MARGIN = CELL_SIZE * 0.8;
+  const SVG_W = BOARD_W + 2 * MARGIN;
+  const SVG_H = BOARD_H + 2 * MARGIN;
 
   // Check if a piece belongs to the current player
   const isOwnPiece = (piece) => {
@@ -276,12 +281,24 @@ function Xiangqi() {
     }
   };
 
+  // Convert board position to coordinate notation
+  const getCoordinate = (row, col) => {
+    const rowNum = BOARD_ROWS - row;
+    const colLetter = String.fromCharCode(97 + col);
+    return `${colLetter}${rowNum}`;
+  };
+
   return (
     <div className="xiangqi-container">
       <h2>Xiangqi - Chinese Chess</h2>
       <div className="xiangqi-info">
         <p>Turn: <span className={turn}>{turn === 'red' ? 'Red' : 'Black'}</span></p>
         {message && <div className="xiangqi-message">{message}</div>}
+        {hoveredPosition && (
+          <div className="xiangqi-coordinate-display">
+            Position: <strong>{hoveredPosition.coord}</strong> (Row {hoveredPosition.row + 1}, Col {hoveredPosition.col + 1})
+          </div>
+        )}
       </div>
       <div className="xiangqi-captured-row">
         <div className="xiangqi-captured black">
@@ -297,40 +314,78 @@ function Xiangqi() {
           ))}
         </div>
       </div>
-      {/* Board and piece names side by side */}
-      <div className="xiangqi-flex-row">
-        <div className="xiangqi-piece-list">
-          <h3>Piece Names</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Chinese</th>
-                <th>Pinyin</th>
-                <th>English</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td>帥 / 將</td><td>shuài / jiàng</td><td>General</td></tr>
-              <tr><td>仕 / 士</td><td>shì</td><td>Advisor / Guard</td></tr>
-              <tr><td>相 / 象</td><td>xiàng</td><td>Elephant / Minister</td></tr>
-              <tr><td>馬</td><td>mǎ</td><td>Horse / Knight</td></tr>
-              <tr><td>車</td><td>jū</td><td>Chariot / Rook</td></tr>
-              <tr><td>炮 / 砲</td><td>pào</td><td>Cannon</td></tr>
-              <tr><td>兵 / 卒</td><td>bīng / zú</td><td>Soldier / Pawn</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div ref={containerRef} style={{ width: '100%', maxWidth: 540 }}>
-          <div className="xiangqi-board-svg-wrapper" style={{ position: 'relative', width: boardPx, height: boardPx }}>
-            <svg width={BOARD_W} height={BOARD_H} className="xiangqi-svg-board" style={{ position: 'absolute', left: 0, top: 0, zIndex: 1, width: BOARD_W, height: BOARD_H }}>
+      <div className="xiangqi-vertical-stack">
+        <div ref={containerRef} style={{ width: SVG_W, minWidth: SVG_W, maxWidth: SVG_W, margin: '0 auto' }}>
+          <div className="xiangqi-board-svg-wrapper" style={{ position: 'relative', width: SVG_W, minWidth: SVG_W, maxWidth: SVG_W, height: SVG_H }}>
+            <svg width={SVG_W} height={SVG_H} className="xiangqi-svg-board" style={{ position: 'absolute', left: 0, top: 0, zIndex: 1, width: SVG_W, height: SVG_H }}>
+              {/* Row numbers (1-10) on the left side */}
+              {[...Array(BOARD_ROWS)].map((_, r) => (
+                <text
+                  key={`row-${r}`}
+                  x={MARGIN * 0.4}
+                  y={MARGIN + r * CELL_SIZE + CELL_SIZE/2}
+                  fontSize={CELL_SIZE * 0.28}
+                  fill="#8B4513"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {BOARD_ROWS - r}
+                </text>
+              ))}
+              {/* Column letters (a-i) on the top */}
+              {[...Array(BOARD_COLS)].map((_, c) => (
+                <text
+                  key={`col-${c}`}
+                  x={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                  y={MARGIN * 0.4}
+                  fontSize={CELL_SIZE * 0.28}
+                  fill="#8B4513"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {String.fromCharCode(97 + c)}
+                </text>
+              ))}
+              {/* Row numbers (1-10) on the right side */}
+              {[...Array(BOARD_ROWS)].map((_, r) => (
+                <text
+                  key={`row-right-${r}`}
+                  x={SVG_W - MARGIN * 0.4}
+                  y={MARGIN + r * CELL_SIZE + CELL_SIZE/2}
+                  fontSize={CELL_SIZE * 0.28}
+                  fill="#8B4513"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {BOARD_ROWS - r}
+                </text>
+              ))}
+              {/* Column letters (a-i) on the bottom */}
+              {[...Array(BOARD_COLS)].map((_, c) => (
+                <text
+                  key={`col-bottom-${c}`}
+                  x={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                  y={SVG_H - MARGIN * 0.4}
+                  fontSize={CELL_SIZE * 0.28}
+                  fill="#8B4513"
+                  fontWeight="bold"
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {String.fromCharCode(97 + c)}
+                </text>
+              ))}
               {/* Horizontal lines */}
               {[...Array(BOARD_ROWS)].map((_, r) => (
                 <line
                   key={'h'+r}
-                  x1={CELL_SIZE/2}
-                  y1={r * CELL_SIZE + CELL_SIZE/2}
-                  x2={BOARD_W - CELL_SIZE/2}
-                  y2={r * CELL_SIZE + CELL_SIZE/2}
+                  x1={MARGIN + CELL_SIZE/2}
+                  y1={MARGIN + r * CELL_SIZE + CELL_SIZE/2}
+                  x2={SVG_W - MARGIN - CELL_SIZE/2}
+                  y2={MARGIN + r * CELL_SIZE + CELL_SIZE/2}
                   stroke="#b8860b"
                   strokeWidth={2}
                 />
@@ -341,10 +396,10 @@ function Xiangqi() {
                   // First and last columns: draw full vertical line
                   <line
                     key={'v'+c}
-                    x1={c * CELL_SIZE + CELL_SIZE/2}
-                    y1={CELL_SIZE/2}
-                    x2={c * CELL_SIZE + CELL_SIZE/2}
-                    y2={BOARD_H - CELL_SIZE/2}
+                    x1={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                    y1={MARGIN + CELL_SIZE/2}
+                    x2={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                    y2={SVG_H - MARGIN - CELL_SIZE/2}
                     stroke="#b8860b"
                     strokeWidth={2}
                   />
@@ -352,19 +407,19 @@ function Xiangqi() {
                   <g key={'v'+c}>
                     {/* Top part */}
                     <line
-                      x1={c * CELL_SIZE + CELL_SIZE/2}
-                      y1={CELL_SIZE/2}
-                      x2={c * CELL_SIZE + CELL_SIZE/2}
-                      y2={CELL_SIZE * 4.5}
+                      x1={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                      y1={MARGIN + CELL_SIZE/2}
+                      x2={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                      y2={MARGIN + CELL_SIZE * 4.5}
                       stroke="#b8860b"
                       strokeWidth={2}
                     />
                     {/* Bottom part */}
                     <line
-                      x1={c * CELL_SIZE + CELL_SIZE/2}
-                      y1={CELL_SIZE * 5.5}
-                      x2={c * CELL_SIZE + CELL_SIZE/2}
-                      y2={BOARD_H - CELL_SIZE/2}
+                      x1={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                      y1={MARGIN + CELL_SIZE * 5.5}
+                      x2={MARGIN + c * CELL_SIZE + CELL_SIZE/2}
+                      y2={SVG_H - MARGIN - CELL_SIZE/2}
                       stroke="#b8860b"
                       strokeWidth={2}
                     />
@@ -373,16 +428,16 @@ function Xiangqi() {
               ))}
               {/* Palace diagonals (classic color) */}
               {/* Black palace (top) */}
-              <line x1={3*CELL_SIZE+CELL_SIZE/2} y1={CELL_SIZE/2} x2={5*CELL_SIZE+CELL_SIZE/2} y2={2*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
-              <line x1={5*CELL_SIZE+CELL_SIZE/2} y1={CELL_SIZE/2} x2={3*CELL_SIZE+CELL_SIZE/2} y2={2*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
+              <line x1={MARGIN + 3*CELL_SIZE+CELL_SIZE/2} y1={MARGIN + CELL_SIZE/2} x2={MARGIN + 5*CELL_SIZE+CELL_SIZE/2} y2={MARGIN + 2*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
+              <line x1={MARGIN + 5*CELL_SIZE+CELL_SIZE/2} y1={MARGIN + CELL_SIZE/2} x2={MARGIN + 3*CELL_SIZE+CELL_SIZE/2} y2={MARGIN + 2*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
               {/* Red palace (bottom) */}
-              <line x1={3*CELL_SIZE+CELL_SIZE/2} y1={7*CELL_SIZE+CELL_SIZE/2} x2={5*CELL_SIZE+CELL_SIZE/2} y2={9*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
-              <line x1={5*CELL_SIZE+CELL_SIZE/2} y1={7*CELL_SIZE+CELL_SIZE/2} x2={3*CELL_SIZE+CELL_SIZE/2} y2={9*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
+              <line x1={MARGIN + 3*CELL_SIZE+CELL_SIZE/2} y1={MARGIN + 7*CELL_SIZE+CELL_SIZE/2} x2={MARGIN + 5*CELL_SIZE+CELL_SIZE/2} y2={MARGIN + 9*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
+              <line x1={MARGIN + 5*CELL_SIZE+CELL_SIZE/2} y1={MARGIN + 7*CELL_SIZE+CELL_SIZE/2} x2={MARGIN + 3*CELL_SIZE+CELL_SIZE/2} y2={MARGIN + 9*CELL_SIZE+CELL_SIZE/2} stroke="#b8860b" strokeWidth={2}/>
               {/* River text (centered both horizontally and vertically in the river band, slightly lower) */}
-              <text x={BOARD_W/2} y={5*CELL_SIZE} fontSize="28" fill="#b8860b" fontWeight="bold" textAnchor="middle" dominantBaseline="middle">楚河漢界</text>
+              <text x={SVG_W/2} y={MARGIN + 5*CELL_SIZE} fontSize="28" fill="#b8860b" fontWeight="bold" textAnchor="middle" dominantBaseline="middle">楚河漢界</text>
             </svg>
             {/* Pieces and click handlers */}
-            <div style={{ position: 'absolute', left: 0, top: 0, zIndex: 2, width: BOARD_W, height: BOARD_H }}>
+            <div style={{ position: 'absolute', left: MARGIN, top: MARGIN, zIndex: 2, width: BOARD_W, height: BOARD_H }}>
               {Array.from({length: BOARD_ROWS}).map((_, row) => (
                 <div className="xiangqi-row" key={row} style={{ height: CELL_SIZE }}>
                   {Array.from({length: BOARD_COLS}).map((_, col) => {
@@ -395,6 +450,8 @@ function Xiangqi() {
                         key={col}
                         style={{ width: CELL_SIZE, height: CELL_SIZE, fontSize: CELL_SIZE * 0.7 }}
                         onClick={() => handleCellClick(row, col)}
+                        onMouseEnter={() => setHoveredPosition({row, col, coord: getCoordinate(row, col)})}
+                        onMouseLeave={() => setHoveredPosition(null)}
                       >
                         {piece && <span className={`piece ${isRed(piece) ? 'red' : 'black'}`}>{pieceNames[piece]}</span>}
                         {isPossibleMove && !piece && (
@@ -408,6 +465,28 @@ function Xiangqi() {
             </div>
           </div>
         </div>
+        <div className="xiangqi-piece-list">
+          <h3>Piece Names</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Abbr.</th>
+                <th>Chinese</th>
+                <th>Pinyin</th>
+                <th>English</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>G</td><td>帥 / 將</td><td>shuài / jiàng</td><td>King (General/Marshal)</td></tr>
+              <tr><td>A</td><td>仕 / 士</td><td>shì</td><td>Advisor (Guard)</td></tr>
+              <tr><td>E</td><td>相 / 象</td><td>xiàng</td><td>Elephant (Minister)</td></tr>
+              <tr><td>H</td><td>馬</td><td>mǎ</td><td>Horse (Knight)</td></tr>
+              <tr><td>R</td><td>車</td><td>jū</td><td>Chariot (Rook)</td></tr>
+              <tr><td>C</td><td>炮 / 砲</td><td>pào</td><td>Cannon</td></tr>
+              <tr><td>S</td><td>兵 / 卒</td><td>bīng / zú</td><td>Pawn (Soldier)</td></tr>
+            </tbody>
+          </table>
+        </div>
         <div className="xiangqi-rules-panel">
           <h3>Piece Movement Rules</h3>
           <ul>
@@ -419,6 +498,25 @@ function Xiangqi() {
             <li><b>炮 / 砲 (pào, Cannon):</b> Moves like a chariot, but to capture must jump exactly one piece (the "screen").</li>
             <li><b>兵 / 卒 (bīng / zú, Soldier/Pawn):</b> Moves one point forward. After crossing the river, can also move one point horizontally.</li>
           </ul>
+        </div>
+        <div className="xiangqi-coordinate-panel">
+          <h3>Coordinate System</h3>
+          <p>The board uses a coordinate system with:</p>
+          <ul>
+            <li><strong>Columns:</strong> Letters a-i (left to right)</li>
+            <li><strong>Rows:</strong> Numbers 1-10 (bottom to top)</li>
+            <li><strong>Notation:</strong> Column letter + Row number (e.g., "e5")</li>
+          </ul>
+          <div className="coordinate-examples">
+            <h4>Key Positions:</h4>
+            <ul>
+              <li><strong>Red General:</strong> e10 (Red palace center)</li>
+              <li><strong>Black General:</strong> e1 (Black palace center)</li>
+              <li><strong>River:</strong> Between rows 5 and 6</li>
+              <li><strong>Red Palace:</strong> Rows 8-10, Columns d-f</li>
+              <li><strong>Black Palace:</strong> Rows 1-3, Columns d-f</li>
+            </ul>
+          </div>
         </div>
       </div>
       {/* Tooltip */}

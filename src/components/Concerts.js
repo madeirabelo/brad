@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { API_URL } from '../config';
 import './Concerts.css';
 
 const Concerts = () => {
@@ -43,7 +44,7 @@ const Concerts = () => {
   const fetchConcerts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5050/api/concerts');
+      const response = await fetch(`${API_URL}/concerts`);
       if (!response.ok) {
         throw new Error('Failed to fetch concerts');
       }

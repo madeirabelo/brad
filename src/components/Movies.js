@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { API_URL } from '../config';
 import './Movies.css';
 
 const Movies = () => {
@@ -43,7 +44,7 @@ const Movies = () => {
   const fetchMovies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://192.168.31.71:5050/api/movies');
+      const response = await fetch(`${API_URL}/movies`);
       if (!response.ok) {
         throw new Error('Failed to fetch movies');
       }

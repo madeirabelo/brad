@@ -314,7 +314,7 @@ const Mandelbrot = () => {
     setIsDragging(false);
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
     let newZoom = viewState.zoom * zoomFactor;
@@ -324,7 +324,7 @@ const Mandelbrot = () => {
       ...prev,
       zoom: newZoom
     }));
-  };
+  }, [viewState.zoom]);
 
   // Touch event handlers for mobile support
   const getTouchDistance = (touches) => {
@@ -554,7 +554,7 @@ const Mandelbrot = () => {
         {isRendering && (
           <div className="rendering-overlay">
             <div className="rendering-spinner"></div>
-            <p>Rendering...</p>
+            <p>Calculating for points...</p>
           </div>
         )}
       </div>

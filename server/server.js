@@ -8,8 +8,14 @@ const { Chess } = require('chess.js');
 const app = express();
 const port = process.env.PORT || 5050;
 
-// Enable CORS for all routes
-app.use(cors());
+// Configure CORS for all routes with explicit settings
+app.use(cors({
+  origin: ['http://192.168.31.27', 'http://localhost:3000', 'http://localhost:80', 'http://localhost'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
 
 // Parse JSON bodies
 app.use(express.json());

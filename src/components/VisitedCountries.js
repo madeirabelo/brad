@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { API_URL } from '../config';
 import './VisitedCountries.css';
 
-const API_URL = 'http://localhost:5050/api';
+const API_URL_VISITED = `${API_URL}/visited-countries`;
 const STORAGE_KEY = 'visitedCountries';
 const STORAGE_VERSION = '1.0';
 
@@ -53,7 +54,7 @@ const VisitedCountries = () => {
 
   const saveToServer = useCallback(async (data) => {
     try {
-      const response = await fetch(`${API_URL}/visited-countries/${userId}`, {
+      const response = await fetch(`${API_URL_VISITED}/${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ const VisitedCountries = () => {
 
   const loadFromServer = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/visited-countries/${userId}`);
+      const response = await fetch(`${API_URL_VISITED}/${userId}`);
       
       if (!response.ok) {
         throw new Error('Failed to load from server');

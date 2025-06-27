@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
+import { API_URL } from '../config';
 import './Chess.css';
 
-const API_URL = 'http://localhost:5050/api/chess';
+const API_URL_CHESS = `${API_URL}/chess`;
 
 const ChessGame = () => {
   const [game, setGame] = useState(new Chess());
@@ -38,7 +39,7 @@ const ChessGame = () => {
 
   const createNewGame = async () => {
     try {
-      const response = await fetch(`${window.location.protocol}//${window.location.hostname}:5050/api/chess/games`, {
+      const response = await fetch(`${API_URL_CHESS}/games`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -70,7 +71,7 @@ const ChessGame = () => {
       console.log('Attempting to join game:', gameKey);
       
       // First check if the game exists
-      const checkResponse = await fetch(`${window.location.protocol}//${window.location.hostname}:5050/api/chess/games/${gameKey}`);
+      const checkResponse = await fetch(`${API_URL_CHESS}/games/${gameKey}`);
       if (!checkResponse.ok) {
         throw new Error('Game not found');
       }
@@ -83,7 +84,7 @@ const ChessGame = () => {
       }
 
       // Update the game state to join
-      const response = await fetch(`${window.location.protocol}//${window.location.hostname}:5050/api/chess/games/${gameKey}`, {
+      const response = await fetch(`${API_URL_CHESS}/games/${gameKey}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +140,7 @@ const ChessGame = () => {
     const pollInterval = setInterval(async () => {
       try {
         console.log('Polling game state for game:', gameKey);
-        const response = await fetch(`${window.location.protocol}//${window.location.hostname}:5050/api/chess/games/${gameKey}`);
+        const response = await fetch(`${API_URL_CHESS}/games/${gameKey}`);
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -211,7 +212,7 @@ const ChessGame = () => {
       }
 
       // Send move to server
-      const response = await fetch(`${window.location.protocol}//${window.location.hostname}:5050/api/chess/games/${gameKey}`, {
+      const response = await fetch(`${API_URL_CHESS}/games/${gameKey}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -286,7 +287,7 @@ const ChessGame = () => {
   const resetGame = async () => {
     if (gameKey) {
       try {
-        await fetch(`${API_URL}/games/${gameKey}`, {
+        await fetch(`${API_URL_CHESS}/games/${gameKey}`, {
           method: 'DELETE',
         });
       } catch (error) {

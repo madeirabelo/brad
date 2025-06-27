@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as d3 from 'd3';
+import { API_URL } from '../config';
 import './ArgentinaMap.css';
 
 const VisitedArgentinaMap = () => {
@@ -17,24 +18,13 @@ const VisitedArgentinaMap = () => {
   useEffect(() => {
     const fetchVisitedProvinces = async () => {
       try {
-        const response = await fetch('http://localhost:5050/api/visited-provincias/default-user');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('Raw API response:', data);
-        
-        // Check if data has the expected structure
-        if (data && data.provincias && Array.isArray(data.provincias)) {
-          setVisitedProvinces(new Set(data.provincias));
-        } else {
-          console.warn('Unexpected API response structure:', data);
-          setVisitedProvinces(new Set());
+        const response = await fetch(`${API_URL}/visited-provincias/default-user`);
+        if (response.ok) {
+          const data = await response.json();
+          setVisitedProvinces(data.provinces || []);
         }
       } catch (error) {
         console.error('Error fetching visited provinces:', error);
-        setError('Failed to load visited provinces');
-        setVisitedProvinces(new Set());
       }
     };
 
