@@ -9,7 +9,6 @@ const VisitedArgentinaMap = () => {
   const [error, setError] = useState(null);
   const [mapData, setMapData] = useState(null);
   const containerRef = useRef(null);
-  const svgRef = useRef(null);
 
   // GeoJSON URL for Argentine provinces
   const GEOJSON_URL = 'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson';
@@ -21,10 +20,14 @@ const VisitedArgentinaMap = () => {
         const response = await fetch(`${API_URL}/visited-provincias/default-user`);
         if (response.ok) {
           const data = await response.json();
-          setVisitedProvinces(data.provinces || []);
+          // Convert array to Set for efficient lookups
+          const provincesArray = data.provincias || [];
+          setVisitedProvinces(new Set(provincesArray));
         }
       } catch (error) {
         console.error('Error fetching visited provinces:', error);
+        // Ensure visitedProvinces is always a Set
+        setVisitedProvinces(new Set());
       }
     };
 
@@ -81,8 +84,9 @@ const VisitedArgentinaMap = () => {
         const container = document.querySelector('.argentina-map-container');
         if (!container) return;
 
-        // Clear previous SVG
+        // Clear previous SVG and tooltip
         d3.select(container).select('svg').remove();
+        d3.select('body').select('.tooltip').remove();
 
         // Get container dimensions
         const { width, height } = container.getBoundingClientRect();
@@ -129,12 +133,17 @@ const VisitedArgentinaMap = () => {
           .enter()
           .append('path')
           .attr('d', path)
-          .attr('fill', d => visitedProvinces.has(d.properties.name) ? '#ffa500' : '#e9ecef')
+          .attr('fill', d => {
+            // Ensure visitedProvinces is a Set
+            const provincesSet = visitedProvinces instanceof Set ? visitedProvinces : new Set();
+            return provincesSet.has(d.properties.name) ? '#ffa500' : '#e9ecef';
+          })
           .attr('stroke', '#fff')
           .attr('stroke-width', 0.5)
           .on('mouseover', function(event, d) {
+            const provincesSet = visitedProvinces instanceof Set ? visitedProvinces : new Set();
             d3.select(this)
-              .attr('fill', visitedProvinces.has(d.properties.name) ? '#ff8c00' : '#dee2e6');
+              .attr('fill', provincesSet.has(d.properties.name) ? '#ff8c00' : '#dee2e6');
             
             tooltip
               .style('visibility', 'visible')
@@ -149,8 +158,9 @@ const VisitedArgentinaMap = () => {
               .style('top', (event.clientY - 15) + 'px');
           })
           .on('mouseout', function(event, d) {
+            const provincesSet = visitedProvinces instanceof Set ? visitedProvinces : new Set();
             d3.select(this)
-              .attr('fill', visitedProvinces.has(d.properties.name) ? '#ffa500' : '#e9ecef');
+              .attr('fill', provincesSet.has(d.properties.name) ? '#ffa500' : '#e9ecef');
             
             tooltip
               .style('visibility', 'hidden')
@@ -172,7 +182,17 @@ const VisitedArgentinaMap = () => {
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      // Clean up D3 elements
+      const container = document.querySelector('.argentina-map-container');
+      if (container) {
+        d3.select(container).select('svg').remove();
+      }
+      d3.select('body').select('.tooltip').remove();
+    };
   }, [mapData, visitedProvinces]);
 
   if (loading) return <div className="loading">Loading map...</div>;
@@ -181,8 +201,7 @@ const VisitedArgentinaMap = () => {
   return (
     <div className="map-container argentina-map-container" ref={containerRef}>
       <h2>Visited Provinces of Argentina</h2>
-      <svg ref={svgRef}></svg>
-      <div className="tooltip"></div>
+      {/* D3 will manage the SVG element */}
     </div>
   );
 };

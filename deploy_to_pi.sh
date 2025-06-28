@@ -52,12 +52,13 @@ print_status "Created temporary directory: $TEMP_DIR"
 
 # Step 3: Copy build files to temp directory
 print_status "Copying build files..."
-cp -r build/* "$TEMP_DIR/"
+mkdir -p "$TEMP_DIR/frontend"
+cp -r build/* "$TEMP_DIR/frontend/"
 
 # Step 4: Copy server files to temp directory
 print_status "Copying server files..."
-mkdir -p "$TEMP_DIR/server"
-cp -r server/* "$TEMP_DIR/server/"
+mkdir -p "$TEMP_DIR/backend"
+cp -r server/* "$TEMP_DIR/backend/"
 
 # Step 5: Create deployment script for Raspberry Pi
 cat > "$TEMP_DIR/deploy_on_pi.sh" << 'EOF'
@@ -77,10 +78,61 @@ print_error() {
     echo -e "${RED}[PI ERROR]${NC} $1"
 }
 
-# Stop existing server if running
-print_status "Stopping existing server..."
-sudo systemctl stop brad-server 2>/dev/null || true
-pkill -f "node.*server.js" 2>/dev/null || true
+print_warning() {
+    echo -e "${YELLOW}[PI WARNING]${NC} $1"
+}
+
+# Stop existing PM2 processes if running
+print_status "Stopping existing PM2 processes..."
+pm2 stop brad-backend 2>/dev/null || true
+pm2 stop brad-server 2>/dev/null || true
+pm2 delete brad-backend 2>/dev/null || true
+pm2 delete brad-server 2>/dev/null || true
+
+# Kill any processes using port 5050 to prevent EADDRINUSE errors
+print_status "Cleaning up port 5050..."
+PORT_PIDS=$(sudo lsof -ti:5050 2>/dev/null || true)
+if [ ! -z "$PORT_PIDS" ]; then
+    print_warning "Found processes using port 5050: $PORT_PIDS"
+    echo "$PORT_PIDS" | xargs -r sudo kill -9
+    print_status "Killed processes using port 5050"
+    sleep 3
+else
+    print_status "Port 5050 is clean"
+fi
+
+# Additional cleanup: Kill any Node.js processes that might be lingering
+print_status "Cleaning up any lingering Node.js processes..."
+NODE_PIDS=$(ps aux | grep node | grep -v grep | awk '{print $2}' 2>/dev/null || true)
+if [ ! -z "$NODE_PIDS" ]; then
+    print_warning "Found Node.js processes: $NODE_PIDS"
+    echo "$NODE_PIDS" | xargs -r sudo kill -9
+    print_status "Killed lingering Node.js processes"
+    sleep 2
+fi
+
+# Double-check port is free
+print_status "Verifying port 5050 is available..."
+for i in {1..5}; do
+    if sudo lsof -i:5050 >/dev/null 2>&1; then
+        print_warning "Port 5050 is still in use (attempt $i/5), waiting..."
+        sleep 2
+        # Try to kill again
+        PORT_PIDS=$(sudo lsof -ti:5050 2>/dev/null || true)
+        if [ ! -z "$PORT_PIDS" ]; then
+            echo "$PORT_PIDS" | xargs -r sudo kill -9
+        fi
+    else
+        print_status "Port 5050 is now available"
+        break
+    fi
+    
+    if [ $i -eq 5 ]; then
+        print_error "Port 5050 is still in use after 5 attempts!"
+        sudo lsof -i:5050
+        exit 1
+    fi
+done
 
 # Create server directory
 print_status "Setting up server directory..."
@@ -89,51 +141,98 @@ sudo chown pi:pi /home/pi/brad-server
 
 # Copy server files
 print_status "Installing server files..."
-cp -r server/* /home/pi/brad-server/
+cp -r backend/* /home/pi/brad-server/
 
 # Install server dependencies
 print_status "Installing server dependencies..."
 cd /home/pi/brad-server
 npm install --production
 
-# Create systemd service for the backend
-print_status "Creating systemd service..."
-sudo tee /etc/systemd/system/brad-server.service > /dev/null << 'SERVICE_EOF'
-[Unit]
-Description=Brad Backend Server
-After=network.target
+# Start the backend server with PM2
+print_status "Starting backend server with PM2..."
+cd /home/pi/brad-server
 
-[Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/brad-server
-ExecStart=/usr/bin/node server.js
-Restart=always
-RestartSec=10
-Environment=NODE_ENV=production
-Environment=PORT=5050
+# Retry mechanism for starting the backend
+MAX_RETRIES=3
+RETRY_COUNT=0
 
-[Install]
-WantedBy=multi-user.target
-SERVICE_EOF
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    pm2 start server.js --name brad-server --env production
+    
+    # Wait a moment for the process to start
+    sleep 3
+    
+    # Check if the process started successfully
+    if pm2 list | grep -q "brad-server.*online"; then
+        print_status "✅ Backend server started successfully on attempt $((RETRY_COUNT + 1))"
+        break
+    else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        print_warning "Backend failed to start (attempt $RETRY_COUNT/$MAX_RETRIES)"
+        
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+            print_status "Cleaning up and retrying..."
+            pm2 delete brad-server 2>/dev/null || true
+            
+            # Kill any processes using port 5050
+            PORT_PIDS=$(sudo lsof -ti:5050 2>/dev/null || true)
+            if [ ! -z "$PORT_PIDS" ]; then
+                echo "$PORT_PIDS" | xargs -r sudo kill -9
+                print_status "Killed processes using port 5050"
+            fi
+            
+            # Additional cleanup: Kill any Node.js processes
+            NODE_PIDS=$(ps aux | grep node | grep -v grep | awk '{print $2}' 2>/dev/null || true)
+            if [ ! -z "$NODE_PIDS" ]; then
+                echo "$NODE_PIDS" | xargs -r sudo kill -9
+                print_status "Killed lingering Node.js processes"
+            fi
+            
+            sleep 3
+        else
+            print_error "❌ Failed to start backend server after $MAX_RETRIES attempts"
+            pm2 logs brad-server --lines 10
+            exit 1
+        fi
+    fi
+done
 
-# Enable and start the service
-print_status "Starting backend service..."
-sudo systemctl daemon-reload
-sudo systemctl enable brad-server
-sudo systemctl start brad-server
+# Save PM2 configuration
+print_status "Saving PM2 configuration..."
+pm2 save
 
-# Check if service is running
-if sudo systemctl is-active --quiet brad-server; then
+# Check if PM2 process is running
+if pm2 list | grep -q "brad-server.*online"; then
     print_status "✅ Backend server is running on port 5050"
+    
+    # Wait a moment for the server to fully start
+    sleep 3
+    
+    # Test if the backend is actually responding
+    print_status "Testing backend connectivity..."
+    for i in {1..10}; do
+        if curl -s http://localhost:5050/api/movies >/dev/null 2>&1; then
+            print_status "✅ Backend is responding to API requests"
+            break
+        else
+            if [ $i -eq 10 ]; then
+                print_warning "⚠️  Backend started but not responding to API requests"
+            else
+                print_status "Waiting for backend to be ready... (attempt $i/10)"
+                sleep 2
+            fi
+        fi
+    done
 else
     print_error "❌ Failed to start backend server"
-    sudo systemctl status brad-server
+    pm2 logs brad-server --lines 10
+    exit 1
 fi
 
 # Copy frontend files to nginx directory
 print_status "Deploying frontend to nginx..."
-sudo cp -r * /var/www/html/
+sudo rm -rf /var/www/html/*
+sudo cp -r /tmp/brad-deploy/frontend/* /var/www/html/
 sudo chown -R www-data:www-data /var/www/html/
 sudo chmod -R 755 /var/www/html/
 
@@ -179,11 +278,17 @@ rm -rf "$TEMP_DIR"
 print_status "Verifying deployment..."
 sleep 3
 
-# Check if backend is running
-if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST" "sudo systemctl is-active --quiet brad-server"; then
-    print_status "✅ Backend server is running"
+# Check if PM2 processes are running
+if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST" "pm2 list | grep -q 'brad-server.*online'"; then
+    print_status "✅ Backend server (brad-server) is running"
 else
-    print_warning "⚠️  Backend server might not be running"
+    print_warning "⚠️  Backend server (brad-server) might not be running"
+fi
+
+if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST" "pm2 list | grep -q 'brad-backend.*online'"; then
+    print_status "✅ Backend server (brad-backend) is running"
+else
+    print_warning "⚠️  Backend server (brad-backend) might not be running"
 fi
 
 # Check if nginx is serving the frontend
@@ -191,6 +296,24 @@ if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST"
     print_status "✅ Frontend is being served by nginx"
 else
     print_warning "⚠️  Frontend might not be accessible"
+fi
+
+# Test backend API endpoints
+print_status "Testing backend API endpoints..."
+sleep 5  # Give backend time to fully start
+
+# Test movies endpoint
+if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST" "curl -s http://localhost:5050/api/movies | grep -q 'movies'"; then
+    print_status "✅ Movies API is working"
+else
+    print_warning "⚠️  Movies API might not be working"
+fi
+
+# Test concerts endpoint
+if sshpass -p "$PI_PASSWORD" ssh -o StrictHostKeyChecking=no "$PI_USER@$PI_HOST" "curl -s http://localhost:5050/api/concerts | grep -q 'concerts'"; then
+    print_status "✅ Concerts API is working"
+else
+    print_warning "⚠️  Concerts API might not be working"
 fi
 
 echo ""
@@ -201,8 +324,10 @@ echo "   Frontend: http://$PI_HOST (served by nginx)"
 echo "   Backend: http://$PI_HOST:5050 (internal)"
 echo ""
 echo "🔧 Useful commands:"
-echo "   Check backend status: ssh $PI_USER@$PI_HOST 'sudo systemctl status brad-server'"
-echo "   View backend logs: ssh $PI_USER@$PI_HOST 'sudo journalctl -u brad-server -f'"
-echo "   Restart backend: ssh $PI_USER@$PI_HOST 'sudo systemctl restart brad-server'"
+echo "   Check PM2 status: ssh $PI_USER@$PI_HOST 'pm2 list'"
+echo "   View backend logs: ssh $PI_USER@$PI_HOST 'pm2 logs brad-server'"
+echo "   View backend logs: ssh $PI_USER@$PI_HOST 'pm2 logs brad-backend'"
+echo "   Restart backend: ssh $PI_USER@$PI_HOST 'pm2 restart brad-server'"
+echo "   Restart backend: ssh $PI_USER@$PI_HOST 'pm2 restart brad-backend'"
 echo "   Check nginx status: ssh $PI_USER@$PI_HOST 'sudo systemctl status nginx'"
 echo "" 
